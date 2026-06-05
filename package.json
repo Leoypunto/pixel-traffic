@@ -1,0 +1,16 @@
+{
+  "name": "pixel-traffic",
+  "version": "1.0.0",
+  "description": "El Joint 8-bit Traffic Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "dotenv": "^17.4.2",
+    "express": "^4.18.2",
+    "node-cron": "^4.2.1",
+    "puppeteer": "^25.1.0"
+  }
+}

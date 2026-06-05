@@ -1,0 +1,8 @@
+.env
+node_modules/
+traffic.db
+debug-*.png
+debug-*.json
+*.db-shm
+*.db-wal
+debug-row.html
