@@ -219,6 +219,34 @@ app.get('/api/metrics', (req, res) => {
   res.json({ ranking, weeks, estados, clientes });
 });
 
+// ─── API: Update designer skills ─────────────────────────────────────────────
+app.put('/api/designers/:name/skills', express.json(), (req, res) => {
+  const { name } = req.params;
+  const { arte, ejecucion, animacion, velocidad, nivel, star_rating } = req.body;
+
+  const designer = db.prepare('SELECT * FROM designers WHERE name = ?').get(decodeURIComponent(name));
+  if (!designer) return res.status(404).json({ error: 'Designer not found' });
+
+  let existing = {};
+  try { existing = JSON.parse(designer.skills || '{}'); } catch(e) {}
+
+  const promedio = +(arte * 0.4 + ejecucion * 0.2 + animacion * 0.2 + velocidad * 0.2).toFixed(1);
+
+  const updated = {
+    ...existing,
+    arte:       Number(arte),
+    ejecucion:  Number(ejecucion),
+    animacion:  Number(animacion),
+    velocidad:  Number(velocidad),
+    nivel:      nivel || existing.nivel || 'Mid',
+    star_rating: Number(star_rating),
+    promedio,
+  };
+
+  db.prepare('UPDATE designers SET skills = ? WHERE name = ?').run(JSON.stringify(updated), designer.name);
+  res.json({ ok: true, skills: updated });
+});
+
 // ─── API: Manual refresh ─────────────────────────────────────────────────────
 app.post('/api/refresh', async (req, res) => {
   res.json({ ok: true, message: 'Scrape iniciado en background' });
