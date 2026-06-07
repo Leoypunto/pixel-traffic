@@ -118,6 +118,40 @@ const seedSkills = db.transaction(() => {
 });
 seedSkills();
 
+// ─── Migration: add brands column if missing ─────────────────────────────────
+try {
+  db.prepare('SELECT brands FROM designers LIMIT 1').get();
+} catch (e) {
+  db.exec('ALTER TABLE designers ADD COLUMN brands TEXT');
+}
+
+// ─── Seed brands ──────────────────────────────────────────────────────────────
+const brandsData = [
+  { name: 'Jonathan Fajardo',    brands: ['Multiplaza'] },
+  { name: 'Yamileth Batista',    brands: ['Alcaldía'] },
+  { name: 'Ramiro González',     brands: ['Banisi'] },
+  { name: 'Leo Castro',          brands: ['Metromall'] },
+  { name: 'Aris Alain',          brands: ['Betcha'] },
+  { name: 'Mariel Marengo',      brands: ['MadCam'] },
+  { name: 'Paula Lobo',          brands: ['Volkswagen', "Steven's"] },
+  { name: 'Julio Mejía',         brands: ['MadCam'] },
+  { name: 'Miguel Díaz',         brands: ['General'] },
+  { name: 'Alexander Caballero', brands: ['Xtra'] },
+  { name: 'Arturo Atencio',      brands: ['Más Móvil'] },
+  { name: 'Eduardo Rolla',       brands: ['Más Móvil'] },
+  { name: 'Jonathan Barrelier',  brands: ['Más Móvil'] },
+  { name: 'Jesús Ortega',        brands: ['FASA'] },
+  { name: 'Luis Wong',           brands: ['Nissan'] },
+  { name: 'Cristian Delgado',    brands: ['General'] },
+  { name: 'Robin De León',       brands: ['Xtra'] },
+  { name: 'Ana Turner',          brands: ['Multiplaza', 'Metromall'] },
+];
+
+const updateBrands = db.prepare('UPDATE designers SET brands = ? WHERE name = ?');
+db.transaction(() => {
+  for (const d of brandsData) updateBrands.run(JSON.stringify(d.brands), d.name);
+})();
+
 // ─── Migration: add title column if missing ──────────────────────────────────
 try {
   db.prepare('SELECT title FROM designers LIMIT 1').get();

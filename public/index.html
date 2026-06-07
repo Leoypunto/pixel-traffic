@@ -66,6 +66,15 @@
     .card-head:hover { background:rgba(255,255,255,.03); }
     .card-head-hint { position:absolute; bottom:4px; right:10px; font-size:4px; color:var(--dim); letter-spacing:1px; opacity:.6; }
 
+    /* ─── BRAND TAGS ─────────────────────────────────────────────── */
+    .brand-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+    .brand-tag {
+      font-size:4px; padding:2px 5px; border:1px solid;
+      color:#ffd700; border-color:rgba(255,215,0,.4);
+      background:rgba(255,215,0,.07); letter-spacing:.5px;
+      white-space:nowrap;
+    }
+
     /* Avatar */
     .avatar { width:48px; height:48px; flex-shrink:0; border:2px solid var(--border); position:relative; }
     .avatar canvas { display:block; }
@@ -500,6 +509,18 @@ const NICKNAMES = {
 };
 function nickname(fullName) { return NICKNAMES[fullName] || fullName.split(' ')[0]; }
 
+function brandTagsHtml(brands, small = true) {
+  if (!brands || !brands.length) return '';
+  const cls = small ? 'brand-tag' : 'brand-tag';
+  return `<div class="brand-tags">${brands.map(b => `<span class="${cls}">${b}</span>`).join('')}</div>`;
+}
+
+function parseBrands(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try { return JSON.parse(raw); } catch(e) { return []; }
+}
+
 // ─── SKILLS ──────────────────────────────────────────────────────────────
 const SKILL_DEFS = [
   { key:'arte',     icon:'🎨', label:'DIR.ARTE',  color:'#a855f7', grad:'linear-gradient(90deg,#7c3aed,#a855f7)' },
@@ -639,8 +660,17 @@ function openDesigner(idx, e) {
   currentDTab = 'active';
 
   const skills = d.skills ? (typeof d.skills === 'string' ? JSON.parse(d.skills) : d.skills) : null;
+  const brands = parseBrands(d.brands);
   document.getElementById('dm-name').textContent = nickname(d.name);
   document.getElementById('dm-role').textContent = (d.title || 'DISEÑADOR').toUpperCase();
+  // Brand tags en el modal
+  let brandsEl = document.getElementById('dm-brands');
+  if (!brandsEl) {
+    brandsEl = document.createElement('div');
+    brandsEl.id = 'dm-brands';
+    document.getElementById('dm-role').insertAdjacentElement('afterend', brandsEl);
+  }
+  brandsEl.innerHTML = brandTagsHtml(brands);
   document.getElementById('dm-active').textContent  = d.active_count;
   document.getElementById('dm-done').textContent    = d.completed_count;
   document.getElementById('dm-total').textContent   = d.tasks ? d.tasks.length : d.active_count + d.completed_count;
@@ -741,6 +771,7 @@ function openTaskByKey(key) {
 function renderCard(designer, idx) {
   const {name,color,active_count,completed_count,active_tasks} = designer;
   const skills = designer.skills ? (typeof designer.skills === 'string' ? JSON.parse(designer.skills) : designer.skills) : null;
+  const brands = parseBrands(designer.brands);
   const [badge,bclass] = getBadge(active_count);
   const nivel = skills ? skills.nivel : null;
   const nClass = nivelClass(nivel);
@@ -765,7 +796,8 @@ function renderCard(designer, idx) {
       <div class="head-info">
         <div class="designer-name">${firstName}</div>
         <div class="designer-role">${(designer.title||'DISEÑADOR').toUpperCase().substring(0,22)}</div>
-        <div class="bars">
+        ${brandTagsHtml(brands)}
+        <div class="bars" style="margin-top:4px;">
           <div class="bar-row"><span class="bar-icon">⚡</span><div class="bar-track"><div class="bar-fill bar-active" style="width:${hpPct}%"></div></div><span class="bar-num" style="color:var(--red)">${active_count}</span></div>
           <div class="bar-row"><span class="bar-icon">★</span><div class="bar-track"><div class="bar-fill bar-done" style="width:${xpPct}%"></div></div><span class="bar-num" style="color:var(--green)">${completed_count}</span></div>
         </div>
