@@ -111,6 +111,84 @@ app.get('/api/tasks', (req, res) => {
   res.json(enriched);
 });
 
+// ─── API: Metrics ────────────────────────────────────────────────────────────
+app.get('/api/metrics', (req, res) => {
+  const allTasks    = db.prepare('SELECT * FROM tasks').all();
+  const designers   = db.prepare('SELECT * FROM designers WHERE active=1').all();
+
+  // Enrich tasks with raw_html fields
+  const tasks = allTasks.map(t => {
+    let extra = {};
+    try { extra = JSON.parse(t.raw_html || '{}'); } catch(e) {}
+    const clean = v => (!v || v.startsWith('Select') || v.length > 20) ? '' : v.trim();
+    return {
+      ...t,
+      estado:       extra.estado      || '',
+      cliente:      extra.cliente     || '',
+      fecha_inicio: clean(extra.fecha_inicio || t.order_date || ''),
+      fecha_fin:    clean(extra.fecha_fin    || ''),
+    };
+  });
+
+  // ── 1. Ranking de carga actual (all active tasks) ─────────────────────────
+  const ranking = designers.map(d => {
+    const dtasks = tasks.filter(t => t.designer_name === d.name && t.status !== 'completed' && t.status !== 'archived');
+    return { name: d.name, color: d.color, count: dtasks.length };
+  }).sort((a, b) => b.count - a.count);
+
+  // ── 2. Historial semanal — últimas 8 semanas ─────────────────────────────
+  const weeks = [];
+  const now = new Date();
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i * 7);
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // lunes
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    const label = `${String(monday.getDate()).padStart(2,'0')}/${String(monday.getMonth()+1).padStart(2,'0')}`;
+
+    const wStr  = monday.toISOString().slice(0, 10);
+    const wEnd  = sunday.toISOString().slice(0, 10);
+
+    // tasks active during this week
+    const count = tasks.filter(t => {
+      const s = t.fecha_inicio, e = t.fecha_fin;
+      if (!s && !e) return false;
+      if (s && e)  return s <= wEnd && e >= wStr;
+      if (s)       return s >= wStr && s <= wEnd;
+      if (e)       return e >= wStr && e <= wEnd;
+      return false;
+    }).length;
+
+    weeks.push({ label, start: wStr, end: wEnd, count });
+  }
+
+  // ── 3. Distribución de estados ────────────────────────────────────────────
+  const estadoMap = {};
+  tasks.filter(t => t.status !== 'completed' && t.estado).forEach(t => {
+    estadoMap[t.estado] = (estadoMap[t.estado] || 0) + 1;
+  });
+  const estados = Object.entries(estadoMap)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+
+  // ── 4. Top clientes ───────────────────────────────────────────────────────
+  const clienteMap = {};
+  tasks.filter(t => t.status !== 'completed' && t.cliente).forEach(t => {
+    clienteMap[t.cliente] = (clienteMap[t.cliente] || 0) + 1;
+  });
+  const clientes = Object.entries(clienteMap)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  res.json({ ranking, weeks, estados, clientes });
+});
+
 // ─── API: Manual refresh ─────────────────────────────────────────────────────
 app.post('/api/refresh', async (req, res) => {
   res.json({ ok: true, message: 'Scrape iniciado en background' });
