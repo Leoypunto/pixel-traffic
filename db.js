@@ -13,7 +13,8 @@ db.exec(`
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
     name      TEXT NOT NULL UNIQUE,
     color     TEXT NOT NULL DEFAULT '#4ECDC4',
-    active    INTEGER NOT NULL DEFAULT 1
+    active    INTEGER NOT NULL DEFAULT 1,
+    skills    TEXT
   );
 
   CREATE TABLE IF NOT EXISTS tasks (
@@ -70,6 +71,52 @@ if (count.c === 0) {
   });
   insertMany(designers);
 }
+
+// ─── Migration: add skills column if missing ─────────────────────────────────
+try {
+  db.prepare('SELECT skills FROM designers LIMIT 1').get();
+} catch (e) {
+  db.exec('ALTER TABLE designers ADD COLUMN skills TEXT');
+}
+
+// ─── Seed skills data from medicion_habilidades ───────────────────────────────
+// Escala 1-5: Dirección de Arte (40%), Ejecución (20%), Animación (20%), Velocidad (20%)
+const skillsData = [
+  { name: 'Alexander Caballero', arte: 2, ejecucion: 3, animacion: 2, velocidad: 4, promedio: 2.6, nivel: 'Junior' },
+  { name: 'Ana Turner',          arte: 2, ejecucion: 5, animacion: 4, velocidad: 5, promedio: 3.6, nivel: 'Mid' },
+  { name: 'Aris Alain',          arte: 3, ejecucion: 4, animacion: 2, velocidad: 3, promedio: 3.0, nivel: 'Mid' },
+  { name: 'Arturo Atencio',      arte: 3, ejecucion: 4, animacion: 4, velocidad: 5, promedio: 3.8, nivel: 'Mid' },
+  { name: 'Cristian Delgado',    arte: 4, ejecucion: 5, animacion: 5, velocidad: 3, promedio: 4.2, nivel: 'Senior' },
+  { name: 'Eduardo Rolla',       arte: 2, ejecucion: 4, animacion: 5, velocidad: 5, promedio: 3.6, nivel: 'Mid' },
+  { name: 'Jesús Ortega',        arte: 3, ejecucion: 4, animacion: 3, velocidad: 3, promedio: 3.2, nivel: 'Mid' },
+  { name: 'Jonathan Barrelier',  arte: 4, ejecucion: 5, animacion: 2, velocidad: 4, promedio: 3.8, nivel: 'Mid' },
+  { name: 'Jonathan Fajardo',    arte: 5, ejecucion: 5, animacion: 1, velocidad: 5, promedio: 4.2, nivel: 'Senior' },
+  { name: 'Julio Mejía',         arte: 2, ejecucion: 4, animacion: 4, velocidad: 5, promedio: 3.4, nivel: 'Mid' },
+  { name: 'Leo Castro',          arte: 5, ejecucion: 5, animacion: 5, velocidad: 3, promedio: 4.6, nivel: 'Lead' },
+  { name: 'Luis Wong',           arte: 4, ejecucion: 5, animacion: 3, velocidad: 3, promedio: 3.8, nivel: 'Mid' },
+  { name: 'Marcela Sánchez',     arte: 5, ejecucion: 5, animacion: 3, velocidad: 3, promedio: 4.2, nivel: 'Senior' },
+  { name: 'Mariel Marengo',      arte: 2, ejecucion: 4, animacion: 3, velocidad: 5, promedio: 3.2, nivel: 'Mid' },
+  { name: 'Miguel Díaz',         arte: 4, ejecucion: 5, animacion: 2, velocidad: 3, promedio: 3.6, nivel: 'Mid' },
+  { name: 'Paula Lobo',          arte: 4, ejecucion: 4, animacion: 3, velocidad: 3, promedio: 3.6, nivel: 'Mid' },
+  { name: 'Ramiro González',     arte: 4, ejecucion: 5, animacion: 5, velocidad: 5, promedio: 4.6, nivel: 'Lead' },
+  { name: 'Robin De León',       arte: 1, ejecucion: 3, animacion: 1, velocidad: 1, promedio: 1.4, nivel: 'Junior bajo' },
+  { name: 'Yamileth Batista',    arte: 5, ejecucion: 5, animacion: 1, velocidad: 4, promedio: 4.0, nivel: 'Senior' },
+];
+
+const updateSkills = db.prepare('UPDATE designers SET skills = ? WHERE name = ?');
+const seedSkills = db.transaction(() => {
+  for (const d of skillsData) {
+    const existing = db.prepare('SELECT skills FROM designers WHERE name = ?').get(d.name);
+    if (existing && !existing.skills) {
+      updateSkills.run(JSON.stringify({
+        arte: d.arte, ejecucion: d.ejecucion,
+        animacion: d.animacion, velocidad: d.velocidad,
+        promedio: d.promedio, nivel: d.nivel,
+      }), d.name);
+    }
+  }
+});
+seedSkills();
 
 // Queries
 const queries = {

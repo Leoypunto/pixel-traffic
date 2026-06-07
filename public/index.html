@@ -112,6 +112,45 @@
     .show-more { font-family:'Press Start 2P',monospace; font-size:5px; padding:4px 8px; width:100%; background:transparent; color:var(--dim); border:1px solid var(--border); cursor:pointer; margin-top:6px; }
     .show-more:hover { color:var(--blue); border-color:var(--blue); }
 
+    /* ─── SKILL BARS (card) ─────────────────────────────────────────── */
+    .skill-strip { padding:8px 14px 10px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:4px; }
+    .skill-row { display:flex; align-items:center; gap:6px; }
+    .skill-icon { font-size:6px; width:14px; flex-shrink:0; }
+    .skill-blocks { display:flex; gap:2px; }
+    .skill-block { width:10px; height:8px; border:1px solid var(--border); }
+    .skill-block.filled { border-color:transparent; }
+    .skill-label-mini { font-size:4px; color:var(--dim); width:18px; text-align:right; }
+
+    /* nivel badge */
+    .nivel-badge {
+      font-size:4.5px; padding:2px 6px; border:1px solid;
+      display:inline-block; margin-bottom:6px;
+    }
+    .nivel-lead   { color:#ffd700; border-color:#ffd700; background:rgba(255,215,0,.1); }
+    .nivel-senior { color:#a855f7; border-color:#a855f7; background:rgba(168,85,247,.1); }
+    .nivel-mid    { color:#00bfff; border-color:#00bfff; background:rgba(0,191,255,.1); }
+    .nivel-junior { color:#f97316; border-color:#f97316; background:rgba(249,115,22,.1); }
+    .nivel-bajo   { color:var(--dim); border-color:var(--border); }
+
+    /* ─── SKILL PANEL (designer modal) ────────────────────────────────── */
+    .skill-panel { padding:16px 18px; border-top:1px solid var(--border); }
+    .skill-panel-title { font-size:5px; color:var(--dim); letter-spacing:3px; margin-bottom:12px; }
+    .skill-big-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .skill-big-icon { font-size:10px; width:20px; flex-shrink:0; }
+    .skill-big-info { flex:1; display:flex; flex-direction:column; gap:4px; }
+    .skill-big-label { font-size:5px; color:var(--dim); letter-spacing:2px; }
+    .skill-big-blocks { display:flex; gap:3px; }
+    .skill-big-block { width:32px; height:14px; border:1px solid var(--border); }
+    .skill-big-block.filled { border-color:transparent; }
+    .skill-big-num { font-size:9px; min-width:20px; text-align:right; }
+    .skill-promedio { display:flex; align-items:center; justify-content:space-between; margin-top:4px; padding-top:10px; border-top:1px solid var(--border); }
+    .skill-promedio-label { font-size:5px; color:var(--dim); letter-spacing:2px; }
+    .skill-promedio-val { font-size:14px; color:var(--gold); }
+    .skill-fortaleza { font-size:5px; margin-top:6px; display:flex; gap:10px; }
+    .skill-fort-item { display:flex; flex-direction:column; gap:3px; }
+    .skill-fort-label { color:var(--dim); font-size:4px; letter-spacing:1px; }
+    .skill-fort-val   { color:var(--text); font-size:5.5px; }
+
     .date-nav { display:flex; align-items:center; gap:4px; }
     footer { text-align:center; padding:20px; font-size:5px; color:var(--dim); letter-spacing:2px; border-top:2px solid var(--border); margin-top:20px; }
     @media(max-width:600px){.grid{grid-template-columns:1fr}.header-stats{justify-content:flex-start}}
@@ -439,6 +478,87 @@ function fmtDate(d) {
 }
 function val(v) { return (!v || v.startsWith('Select') || v === 'undefined') ? '' : v.trim(); }
 
+// ─── SKILLS ──────────────────────────────────────────────────────────────
+const SKILL_DEFS = [
+  { key:'arte',     icon:'🎨', label:'DIR.ARTE', color:'#a855f7' },
+  { key:'ejecucion',icon:'⚙',  label:'EJECUCION', color:'#00bfff' },
+  { key:'animacion',icon:'🎬', label:'ANIMACION', color:'#ff9500' },
+  { key:'velocidad',icon:'⚡', label:'VELOCIDAD',  color:'#39ff14' },
+];
+
+function nivelClass(nivel) {
+  if (!nivel) return 'nivel-mid';
+  const n = nivel.toLowerCase();
+  if (n.includes('lead'))          return 'nivel-lead';
+  if (n.includes('senior'))        return 'nivel-senior';
+  if (n.includes('bajo'))          return 'nivel-bajo';
+  if (n.includes('junior'))        return 'nivel-junior';
+  return 'nivel-mid';
+}
+
+function skillBlocksHtml(val, color, size='sm') {
+  const cls = size === 'lg' ? 'skill-big-block' : 'skill-block';
+  return Array.from({length:5}, (_,i) =>
+    `<div class="${cls}${i < val ? ' filled' : ''}" style="${i < val ? `background:${color}` : ''}"></div>`
+  ).join('');
+}
+
+function skillStripHtml(skills) {
+  if (!skills) return '';
+  return `<div class="skill-strip">
+    ${SKILL_DEFS.map(s => `
+      <div class="skill-row">
+        <span class="skill-icon">${s.icon}</span>
+        <div class="skill-blocks">${skillBlocksHtml(skills[s.key], s.color)}</div>
+        <span class="skill-label-mini" style="color:${s.color}">${skills[s.key]}</span>
+      </div>`).join('')}
+  </div>`;
+}
+
+function skillPanelHtml(skills) {
+  if (!skills) return '';
+  const nClass = nivelClass(skills.nivel);
+
+  // Compute fortaleza/area a mejorar automatically
+  const vals = SKILL_DEFS.map(s => ({ label: s.label, val: skills[s.key] }));
+  const maxS  = vals.reduce((a,b) => b.val > a.val ? b : a);
+  const minS  = vals.reduce((a,b) => b.val < a.val ? b : a);
+
+  return `
+    <div class="skill-panel">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span class="nivel-badge ${nClass}">${(skills.nivel||'Mid').toUpperCase()}</span>
+        <span style="font-size:4.5px;color:var(--dim);letter-spacing:2px;">STATS DE HABILIDAD</span>
+      </div>
+      ${SKILL_DEFS.map(s => `
+        <div class="skill-big-row">
+          <span class="skill-big-icon">${s.icon}</span>
+          <div class="skill-big-info">
+            <div class="skill-big-label">${s.label}</div>
+            <div class="skill-big-blocks">${skillBlocksHtml(skills[s.key], s.color, 'lg')}</div>
+          </div>
+          <span class="skill-big-num" style="color:${s.color}">${skills[s.key]}<span style="font-size:6px;color:var(--dim)">/5</span></span>
+        </div>`).join('')}
+      <div class="skill-promedio">
+        <div>
+          <div class="skill-promedio-label">PROMEDIO PONDERADO</div>
+          <div style="font-size:5px;color:var(--dim);margin-top:3px;">DA×40% + EJ×20% + AN×20% + VE×20%</div>
+        </div>
+        <div class="skill-promedio-val">${skills.promedio}</div>
+      </div>
+      <div class="skill-fortaleza">
+        <div class="skill-fort-item">
+          <div class="skill-fort-label">★ FORTALEZA</div>
+          <div class="skill-fort-val" style="color:var(--green)">${maxS.label}</div>
+        </div>
+        <div class="skill-fort-item">
+          <div class="skill-fort-label">▼ ÁREA A MEJORAR</div>
+          <div class="skill-fort-val" style="color:var(--orange)">${minS.label}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ─── TASK MODAL ──────────────────────────────────────────────────────────
 function openTask(t, color) {
   const overlay = document.getElementById('task-modal');
@@ -495,11 +615,21 @@ function openDesigner(idx, e) {
   currentDesignerIdx = idx;
   currentDTab = 'active';
 
+  const skills = d.skills ? (typeof d.skills === 'string' ? JSON.parse(d.skills) : d.skills) : null;
   document.getElementById('dm-name').textContent = d.name;
   document.getElementById('dm-role').textContent = (d.title || 'DISEÑADOR').toUpperCase();
   document.getElementById('dm-active').textContent  = d.active_count;
   document.getElementById('dm-done').textContent    = d.completed_count;
   document.getElementById('dm-total').textContent   = d.tasks ? d.tasks.length : d.active_count + d.completed_count;
+
+  // Inject skill panel into modal
+  let skillEl = document.getElementById('dm-skill-panel');
+  if (!skillEl) {
+    skillEl = document.createElement('div');
+    skillEl.id = 'dm-skill-panel';
+    document.getElementById('designer-modal-box').insertBefore(skillEl, document.querySelector('.dmodal-tabs'));
+  }
+  skillEl.innerHTML = skillPanelHtml(skills);
 
   // Reset tabs
   document.querySelectorAll('.dmodal-tab').forEach(t=>t.classList.remove('active'));
@@ -587,8 +717,11 @@ function openTaskByKey(key) {
 // ─── RENDER CARD ──────────────────────────────────────────────────────────
 function renderCard(designer, idx) {
   const {name,color,active_count,completed_count,active_tasks} = designer;
+  const skills = designer.skills ? (typeof designer.skills === 'string' ? JSON.parse(designer.skills) : designer.skills) : null;
   const [badge,bclass] = getBadge(active_count);
-  const level = getLevel(completed_count, active_count);
+  const nivel = skills ? skills.nivel : null;
+  const nClass = nivelClass(nivel);
+  const levelLabel = nivel ? nivel.toUpperCase() : getLevel(completed_count, active_count);
   const firstName = name.split(' ')[0];
   const hpPct = Math.min(100,(active_count/12)*100);
   const xpPct = Math.min(100,(completed_count/40)*100);
@@ -604,7 +737,7 @@ function renderCard(designer, idx) {
     <div class="card-head" onclick="openDesigner(${idx}, event)">
       <div class="avatar" style="border-color:${color}44">
         <canvas id="cv-${idx}"></canvas>
-        <div class="avatar-level">${level}</div>
+        <div class="avatar-level ${nClass}" style="border-color:currentColor;font-size:4px;padding:2px 4px;">${levelLabel}</div>
       </div>
       <div class="head-info">
         <div class="designer-name">${firstName}</div>
@@ -617,6 +750,7 @@ function renderCard(designer, idx) {
       <div class="status-badge ${bclass}">${badge}</div>
       <div class="card-head-hint">VER PERFIL ▶</div>
     </div>
+    ${skillStripHtml(skills)}
     <div class="task-list">
       <div class="task-header">TAREAS ACTIVAS <span>${active_count}</span></div>
       <div id="tl-${idx}">${tasksInner}</div>
