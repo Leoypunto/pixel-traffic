@@ -813,7 +813,7 @@ function skillStripHtml(skills) {
   // valor general: arco canvas inline
   const prom = skills.promedio || 0;
   const gaugeId = 'gauge_' + Math.random().toString(36).slice(2,7);
-  const gaugeSvg = valorGaugeSvg(prom, 48);
+  const gaugeSvg = valorGaugeSvg(prom, 56);
 
   return `<div class="skill-strip">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
@@ -836,22 +836,23 @@ function skillStripHtml(skills) {
   </div>`;
 }
 
-function valorGaugeSvg(prom, size) {
-  // gauge circular completo con strokeDasharray
+function valorGaugeHtml(prom, size) {
   const color = prom >= 4.5 ? '#ffd700' : prom >= 3.5 ? '#a855f7' : prom >= 2.5 ? '#00bfff' : prom >= 1.5 ? '#f97316' : '#6060a0';
-  const pct   = Math.max(0, Math.min(1, (prom - 1) / 4));
-  const r     = size * 0.36;
-  const cx    = size / 2;
-  const cy    = size / 2;
-  const circ  = 2 * Math.PI * r;
-  // Mostrar solo arco superior (270°) — empieza en la izquierda
-  const arcLen   = circ * 0.75;           // 270° = 75% del círculo
+  const pct      = Math.max(0, Math.min(1, (prom - 1) / 4));
+  const r        = size * 0.36;
+  const cx       = size / 2;
+  const cy       = size / 2;
+  const circ     = 2 * Math.PI * r;
+  const arcLen   = circ * 0.75;
   const dashFill = arcLen * pct;
   const dashGap  = circ - dashFill;
-  // Rotar -225deg para centrar el arco arriba (empieza abajo-izquierda)
-  const fs = size * 0.20;
+  const filled   = Math.round(prom);
+  const starFs   = Math.max(8, size * 0.17);
+  const stars    = Array.from({length:5}, (_,i) =>
+    `<span style="color:${i<filled?color:'#2a2a5a'};font-size:${starFs}px">★</span>`
+  ).join('');
 
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+  const arc = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block">
     <circle cx="${cx}" cy="${cy}" r="${r}"
       fill="none" stroke="#1a1a3a" stroke-width="${size*0.10}"
       stroke-dasharray="${arcLen} ${circ - arcLen}"
@@ -863,10 +864,15 @@ function valorGaugeSvg(prom, size) {
       stroke-dashoffset="${circ * 0.625}"
       stroke-linecap="round"
       style="transition:stroke-dasharray .8s ease"/>
-    <text x="${cx}" y="${cy + size*0.07}" text-anchor="middle" dominant-baseline="middle"
-      font-family="'Press Start 2P',monospace" font-size="${fs}" fill="${color}">${prom}</text>
   </svg>`;
+
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+    ${arc}
+    <div style="display:flex;gap:1px;line-height:1">${stars}</div>
+  </div>`;
 }
+// alias para compatibilidad
+function valorGaugeSvg(prom, size) { return valorGaugeHtml(prom, size); }
 
 function skillPanelHtml(skills) {
   if (!skills) return '';
