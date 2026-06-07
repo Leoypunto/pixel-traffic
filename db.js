@@ -118,6 +118,41 @@ const seedSkills = db.transaction(() => {
 });
 seedSkills();
 
+// ─── Migration: add title column if missing ──────────────────────────────────
+try {
+  db.prepare('SELECT title FROM designers LIMIT 1').get();
+} catch (e) {
+  db.exec('ALTER TABLE designers ADD COLUMN title TEXT');
+}
+
+// ─── Seed titles ──────────────────────────────────────────────────────────────
+const titlesData = [
+  { name: 'Leo Castro',          title: 'Head of Design' },
+  { name: 'Jonathan Fajardo',    title: 'Director de Arte Lead' },
+  { name: 'Yamileth Batista',    title: 'Directora de Arte Lead' },
+  { name: 'Ramiro González',     title: 'Animador y Editor Lead' },
+  { name: 'Cristian Delgado',    title: 'Diseñador 360' },
+  { name: 'Marcela Sánchez',     title: 'Directora de Arte' },
+  { name: 'Miguel Díaz',         title: 'Director de Arte' },
+  { name: 'Luis Wong',           title: 'Diseñador de Ejecución' },
+  { name: 'Jonathan Barrelier',  title: 'Diseñador de Ejecución' },
+  { name: 'Eduardo Rolla',       title: 'Animador / Motion Designer' },
+  { name: 'Julio Mejía',         title: 'Diseñador Motion' },
+  { name: 'Ana Turner',          title: 'Diseñadora de Producción Rápida' },
+  { name: 'Arturo Atencio',      title: 'Diseñador de Producción Rápida' },
+  { name: 'Mariel Marengo',      title: 'Diseñadora de Producción Rápida' },
+  { name: 'Paula Lobo',          title: 'Diseñadora de Dirección de Arte' },
+  { name: 'Jesús Ortega',        title: 'Diseñador Generalista' },
+  { name: 'Aris Alain',          title: 'Diseñador de Producción' },
+  { name: 'Alexander Caballero', title: 'Diseñador de Producción' },
+  { name: 'Robin De León',       title: 'Diseñador en Desarrollo' },
+];
+
+const updateTitle = db.prepare('UPDATE designers SET title = ? WHERE name = ?');
+db.transaction(() => {
+  for (const d of titlesData) updateTitle.run(d.title, d.name);
+})();
+
 // Queries
 const queries = {
   getAllDesigners: db.prepare('SELECT * FROM designers WHERE active = 1 ORDER BY name'),
