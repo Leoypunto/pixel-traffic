@@ -398,6 +398,18 @@
 
   <div class="adv-sep"></div>
 
+  <!-- MARCA -->
+  <select class="cliente-select" id="marca-select" onchange="setMarca(this.value)">
+    <option value="">MARCA: TODAS</option>
+    <option>Multiplaza</option><option>Metromall</option><option>Banisi</option>
+    <option>Alcaldía</option><option>Betcha</option><option>MadCam</option>
+    <option>Volkswagen</option><option>Steven's</option><option>General</option>
+    <option>Xtra</option><option>Más Móvil</option><option>FASA</option>
+    <option>Nissan</option>
+  </select>
+
+  <div class="adv-sep"></div>
+
   <!-- CLIENTE -->
   <select class="cliente-select" id="cliente-select" onchange="setCliente(this.value)">
     <option value="">CLIENTE: TODOS</option>
@@ -534,6 +546,7 @@ let searchQuery  = '';
 let filterEstado = '';
 let filterCliente = '';
 let sortBy = 'carga';
+let filterMarca = '';
 
 // ─── PIXEL ART ──────────────────────────────────────────────────────────
 function drawPixelChar(canvas, color, seed) {
@@ -1022,6 +1035,11 @@ function setCliente(v) {
   renderGrid();
 }
 
+function setMarca(v) {
+  filterMarca = v;
+  renderGrid();
+}
+
 function setSort(s, btn) {
   sortBy = s;
   document.querySelectorAll('.sort-chip').forEach(c=>c.classList.remove('active'));
@@ -1048,7 +1066,13 @@ function highlightText(text, query) {
 function getFiltered() {
   const hasAdvanced = searchQuery || filterEstado || filterCliente;
 
-  let list = allDesigners.map(d => {
+  let list = allDesigners.filter(d => {
+    if (!filterMarca) return true;
+    const brands = parseBrands(d.brands);
+    return brands.some(b => b.toLowerCase() === filterMarca.toLowerCase());
+  });
+
+  list = list.map(d => {
     // Apply task-level filters when advanced filters are active
     if (hasAdvanced) {
       const matching = (d.active_tasks||[]).filter(taskMatches);
