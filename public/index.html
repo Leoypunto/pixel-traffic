@@ -285,6 +285,8 @@
     .hbar-fill { height:100%; position:relative; transition:width 1s ease; }
     .hbar-fill::after { content:''; position:absolute; top:2px; left:0; right:0; height:3px; background:rgba(255,255,255,.2); }
     .hbar-val { font-size:6px; min-width:28px; color:var(--gold); }
+    .star-val { display:flex; gap:2px; align-items:center; flex-shrink:0; }
+    .star-val span { font-size:9px; line-height:1; }
 
     /* weekly bar chart */
     .week-chart { display:flex; align-items:flex-end; gap:6px; height:140px; padding-bottom:24px; position:relative; border-bottom:2px solid var(--border); }
@@ -1474,6 +1476,15 @@ function renderWeeks(weeks) {
   }).join('');
 }
 
+function starsHtml(count, max, color) {
+  const filled = Math.round((count / max) * 5);
+  return `<div class="star-val">` +
+    Array.from({length: 5}, (_, i) =>
+      `<span style="color:${i < filled ? color : '#2a2a5a'}">${i < filled ? '★' : '☆'}</span>`
+    ).join('') +
+  `</div>`;
+}
+
 function renderRanking(ranking) {
   const max = Math.max(...ranking.map(r => r.count), 1);
   document.getElementById('chart-ranking').innerHTML = ranking
@@ -1486,7 +1497,7 @@ function renderRanking(ranking) {
         <div class="hbar-track">
           <div class="hbar-fill" style="width:${pct}%;background:${r.color}"></div>
         </div>
-        <span class="hbar-val">${r.count}</span>
+        ${starsHtml(r.count, max, r.color)}
       </div>`;
     }).join('');
 }
@@ -1500,7 +1511,7 @@ function renderClientes(clientes) {
       <div class="hbar-track">
         <div class="hbar-fill" style="width:${pct}%;background:linear-gradient(90deg,#0077b6,#00bfff)"></div>
       </div>
-      <span class="hbar-val">${c.count}</span>
+      ${starsHtml(c.count, max, '#00bfff')}
     </div>`;
   }).join('');
 }
