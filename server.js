@@ -113,8 +113,23 @@ app.get('/api/tasks', (req, res) => {
 
 // ─── API: Metrics ────────────────────────────────────────────────────────────
 app.get('/api/metrics', (req, res) => {
+  const period  = req.query.period || 'all'; // 'day' | 'week' | 'month' | 'all'
   const allTasks    = db.prepare('SELECT * FROM tasks').all();
   const designers   = db.prepare('SELECT * FROM designers WHERE active=1').all();
+
+  // Rango de fechas para el período
+  const now   = new Date();
+  const today = now.toISOString().slice(0, 10);
+  let periodStart = null;
+  if (period === 'day') {
+    periodStart = today;
+  } else if (period === 'week') {
+    const d = new Date(now);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // lunes
+    periodStart = d.toISOString().slice(0, 10);
+  } else if (period === 'month') {
+    periodStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  }
 
   // Enrich tasks with raw_html fields
   const tasks = allTasks.map(t => {
@@ -130,17 +145,32 @@ app.get('/api/metrics', (req, res) => {
     };
   });
 
-  // ── 1. Ranking de carga actual (all active tasks) ─────────────────────────
+  // Filtro de período sobre tareas
+  function inPeriod(t) {
+    if (!periodStart) return true;
+    const s = t.fecha_inicio, e = t.fecha_fin;
+    if (!s && !e) return true; // sin fecha → siempre
+    if (s && e)  return s <= today && e >= periodStart;
+    if (s)       return s >= periodStart && s <= today;
+    if (e)       return e >= periodStart && e <= today;
+    return false;
+  }
+
+  // ── 1. Ranking de carga actual ─────────────────────────────────────────────
   const ranking = designers.map(d => {
-    const dtasks = tasks.filter(t => t.designer_name === d.name && t.status !== 'completed' && t.status !== 'archived');
+    const dtasks = tasks.filter(t =>
+      t.designer_name === d.name &&
+      t.status !== 'completed' && t.status !== 'archived' &&
+      inPeriod(t)
+    );
     return { name: d.name, color: d.color, count: dtasks.length };
   }).sort((a, b) => b.count - a.count);
 
   // ── 2. Historial semanal — últimas 8 semanas ─────────────────────────────
   const weeks = [];
-  const now = new Date();
+  const nowW = new Date();
   for (let i = 7; i >= 0; i--) {
-    const d = new Date(now);
+    const d = new Date(nowW);
     d.setDate(d.getDate() - i * 7);
     const monday = new Date(d);
     monday.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // lunes
@@ -168,7 +198,7 @@ app.get('/api/metrics', (req, res) => {
 
   // ── 3. Distribución de estados ────────────────────────────────────────────
   const estadoMap = {};
-  tasks.filter(t => t.status !== 'completed' && t.estado).forEach(t => {
+  tasks.filter(t => t.status !== 'completed' && t.estado && inPeriod(t)).forEach(t => {
     estadoMap[t.estado] = (estadoMap[t.estado] || 0) + 1;
   });
   const estados = Object.entries(estadoMap)
@@ -178,7 +208,7 @@ app.get('/api/metrics', (req, res) => {
 
   // ── 4. Top clientes ───────────────────────────────────────────────────────
   const clienteMap = {};
-  tasks.filter(t => t.status !== 'completed' && t.cliente).forEach(t => {
+  tasks.filter(t => t.status !== 'completed' && t.cliente && inPeriod(t)).forEach(t => {
     clienteMap[t.cliente] = (clienteMap[t.cliente] || 0) + 1;
   });
   const clientes = Object.entries(clienteMap)

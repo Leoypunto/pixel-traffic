@@ -449,6 +449,14 @@
 </div>
 
 <div id="metrics-view">
+  <!-- Período -->
+  <div style="display:flex;align-items:center;gap:10px;padding:16px 24px 0;border-bottom:2px solid var(--border);background:#09091e;">
+    <span style="font-size:6px;color:var(--dim);letter-spacing:2px;">PERÍODO:</span>
+    <button class="sort-chip active" onclick="setMetricsPeriod('all',this)">TODO</button>
+    <button class="sort-chip" onclick="setMetricsPeriod('month',this)">ESTE MES</button>
+    <button class="sort-chip" onclick="setMetricsPeriod('week',this)">ESTA SEMANA</button>
+    <button class="sort-chip" onclick="setMetricsPeriod('day',this)">HOY</button>
+  </div>
   <div class="metrics-loading" id="metrics-loading">CARGANDO DATOS...</div>
   <div class="metrics-grid" id="metrics-grid" style="display:none">
 
@@ -1213,8 +1221,12 @@ function highlightText(text, query) {
 }
 
 // ─── FILTER + SORT ────────────────────────────────────────────────────────
+// Guarda metadatos de filtro FUERA del objeto designer para no romper indexOf
+const _filterMeta = new Map(); // d -> { visibleTasks, matchCount }
+
 function getFiltered() {
   const hasAdvanced = searchQuery || filterEstado || filterCliente;
+  _filterMeta.clear();
 
   let list = allDesigners.filter(d => {
     if (!filterMarca) return true;
@@ -1222,13 +1234,13 @@ function getFiltered() {
     return brands.some(b => b.toLowerCase() === filterMarca.toLowerCase());
   });
 
-  list = list.map(d => {
-    // Apply task-level filters when advanced filters are active
+  list.forEach(d => {
     if (hasAdvanced) {
       const matching = (d.active_tasks||[]).filter(taskMatches);
-      return { ...d, _visibleTasks: matching, _matchCount: matching.length };
+      _filterMeta.set(d, { visibleTasks: matching, matchCount: matching.length });
+    } else {
+      _filterMeta.set(d, { visibleTasks: d.active_tasks||[], matchCount: d.active_count });
     }
-    return { ...d, _visibleTasks: d.active_tasks||[], _matchCount: d.active_count };
   });
 
   // Designer-level filter
@@ -1237,7 +1249,7 @@ function getFiltered() {
   if (currentFilter === 'idle')   list = list.filter(d => d.active_count === 0);
 
   // Hide designers with no matching tasks when advanced filters active
-  if (hasAdvanced) list = list.filter(d => d._matchCount > 0);
+  if (hasAdvanced) list = list.filter(d => (_filterMeta.get(d)?.matchCount || 0) > 0);
 
   // Sort
   if (sortBy === 'nombre') list.sort((a,b) => nickname(a.name).localeCompare(nickname(b.name)));
@@ -1248,8 +1260,11 @@ function getFiltered() {
       return (sb?.promedio||0) - (sa?.promedio||0);
     });
   } else {
-    // carga: by _matchCount when filtered, else active_count
-    list.sort((a,b) => (b._matchCount||b.active_count) - (a._matchCount||a.active_count));
+    list.sort((a,b) => {
+      const ma = _filterMeta.get(a)?.matchCount ?? a.active_count;
+      const mb = _filterMeta.get(b)?.matchCount ?? b.active_count;
+      return mb - ma;
+    });
   }
 
   return list;
@@ -1260,8 +1275,9 @@ function renderGrid() {
   const hasAdvanced = searchQuery || filterEstado || filterCliente;
 
   document.getElementById('grid').innerHTML = filtered.map(d => {
-    const idx = allDesigners.indexOf(d);
-    return renderCard(d, idx, hasAdvanced ? d._visibleTasks : null);
+    const idx = allDesigners.indexOf(d); // ahora siempre encuentra la referencia original
+    const meta = _filterMeta.get(d);
+    return renderCard(d, idx, hasAdvanced ? meta?.visibleTasks : null);
   }).join('');
 
   filtered.forEach(d => {
@@ -1273,7 +1289,7 @@ function renderGrid() {
   // Results count
   const rc = document.getElementById('results-count');
   if (hasAdvanced) {
-    const total = filtered.reduce((s,d)=>s+d._matchCount,0);
+    const total = filtered.reduce((s,d)=>s+(_filterMeta.get(d)?.matchCount||0),0);
     rc.innerHTML = `<strong>${total}</strong> TAREAS · <strong>${filtered.length}</strong> DISEÑADORES`;
   } else {
     rc.innerHTML = '';
@@ -1392,6 +1408,17 @@ async function refresh() {
 
 // ─── VIEW SWITCHING ───────────────────────────────────────────────────────
 let metricsLoaded = false;
+let metricsPeriod = 'all';
+
+function setMetricsPeriod(period, btn) {
+  metricsPeriod = period;
+  document.querySelectorAll('#metrics-view .sort-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  metricsLoaded = false;
+  document.getElementById('metrics-loading').style.display = '';
+  document.getElementById('metrics-grid').style.display = 'none';
+  loadMetrics();
+}
 
 function switchView(view, btn) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -1418,7 +1445,7 @@ const ESTADO_COLORS = [
 
 async function loadMetrics() {
   try {
-    const res  = await fetch('/api/metrics');
+    const res  = await fetch(`/api/metrics?period=${metricsPeriod}`);
     const data = await res.json();
     document.getElementById('metrics-loading').style.display = 'none';
     document.getElementById('metrics-grid').style.display    = 'grid';
