@@ -146,7 +146,7 @@
 
     .head-info { flex:1; min-width:0; }
     .designer-name { font-size:8px; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .designer-role { font-size:5px; color:var(--dim); letter-spacing:1px; margin-bottom:8px; }
+    .designer-role { font-size:5px; color:var(--dim); letter-spacing:1px; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 
     .bars { display:flex; flex-direction:column; gap:5px; }
     .bar-row { display:flex; align-items:center; gap:5px; }
@@ -189,7 +189,7 @@
     .skill-strip { padding:10px 14px 12px; border-top:2px solid var(--border); display:flex; flex-direction:column; gap:6px; background:rgba(0,0,0,.18); }
     .skill-strip-title { font-size:5px; color:var(--dim); letter-spacing:3px; margin-bottom:2px; }
     .skill-row { display:flex; align-items:center; gap:7px; }
-    .skill-icon { font-size:7px; width:16px; flex-shrink:0; }
+    .skill-icon { font-size:5px; width:16px; flex-shrink:0; color:var(--dim); letter-spacing:0; }
     .skill-name { font-size:4.5px; color:var(--dim); width:42px; flex-shrink:0; letter-spacing:.5px; }
     .skill-track { flex:1; height:8px; background:#0a0a1a; border:1px solid var(--border); position:relative; overflow:hidden; }
     .skill-fill  { height:100%; position:relative; transition:width 1s ease; }
@@ -207,7 +207,7 @@
     /* ─── SKILL PANEL (designer modal) ────────────────────────────────── */
     .skill-panel { padding:16px 18px; border-top:1px solid var(--border); }
     .skill-big-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-    .skill-big-icon { font-size:12px; width:22px; flex-shrink:0; }
+    .skill-big-icon { font-size:6px; width:22px; flex-shrink:0; color:var(--dim); }
     .skill-big-info { flex:1; display:flex; flex-direction:column; gap:5px; }
     .skill-big-label { font-size:5px; color:var(--dim); letter-spacing:2px; }
     .skill-big-track { height:14px; background:#0a0a1a; border:1px solid var(--border); position:relative; overflow:hidden; }
@@ -644,10 +644,10 @@ function parseBrands(raw) {
 
 // ─── SKILLS ──────────────────────────────────────────────────────────────
 const SKILL_DEFS = [
-  { key:'arte',     icon:'🎨', label:'DIR.ARTE',  color:'#a855f7', grad:'linear-gradient(90deg,#7c3aed,#a855f7)' },
-  { key:'ejecucion',icon:'⚙',  label:'EJECUCION', color:'#00bfff', grad:'linear-gradient(90deg,#0077b6,#00bfff)' },
-  { key:'animacion',icon:'🎬', label:'ANIMACION',  color:'#ff9500', grad:'linear-gradient(90deg,#c45200,#ff9500)' },
-  { key:'velocidad',icon:'⚡', label:'VELOCIDAD',  color:'#39ff14', grad:'linear-gradient(90deg,#1a8c00,#39ff14)' },
+  { key:'arte',     icon:'DA', label:'DIR.ARTE',  color:'#a855f7', grad:'linear-gradient(90deg,#7c3aed,#a855f7)' },
+  { key:'ejecucion',icon:'EJ', label:'EJECUCION', color:'#00bfff', grad:'linear-gradient(90deg,#0077b6,#00bfff)' },
+  { key:'animacion',icon:'AN', label:'ANIMACION',  color:'#ff9500', grad:'linear-gradient(90deg,#c45200,#ff9500)' },
+  { key:'velocidad',icon:'VE', label:'VELOCIDAD',  color:'#39ff14', grad:'linear-gradient(90deg,#1a8c00,#39ff14)' },
 ];
 
 function nivelClass(nivel) {
@@ -689,35 +689,33 @@ function skillStripHtml(skills) {
 }
 
 function valorGaugeSvg(prom, size) {
-  // Arco semicircular SVG — prom de 1 a 5
-  const pct   = (prom - 1) / 4;           // normalizado 0-1
-  const r     = size * 0.38;
-  const cx    = size / 2;
-  const cy    = size * 0.58;
-  const start = Math.PI;                   // izquierda (180°)
-  const end   = 2 * Math.PI;              // derecha (360°)
-  const sweep = start + pct * Math.PI;
-
-  const x1 = cx + r * Math.cos(start);
-  const y1 = cy + r * Math.sin(start);
-  const x2 = cx + r * Math.cos(sweep);
-  const y2 = cy + r * Math.sin(sweep);
-  const large = pct > 0.5 ? 1 : 0;
-
-  // color según valor
+  // gauge circular completo con strokeDasharray
   const color = prom >= 4.5 ? '#ffd700' : prom >= 3.5 ? '#a855f7' : prom >= 2.5 ? '#00bfff' : prom >= 1.5 ? '#f97316' : '#6060a0';
+  const pct   = Math.max(0, Math.min(1, (prom - 1) / 4));
+  const r     = size * 0.36;
+  const cx    = size / 2;
+  const cy    = size / 2;
+  const circ  = 2 * Math.PI * r;
+  // Mostrar solo arco superior (270°) — empieza en la izquierda
+  const arcLen   = circ * 0.75;           // 270° = 75% del círculo
+  const dashFill = arcLen * pct;
+  const dashGap  = circ - dashFill;
+  // Rotar -225deg para centrar el arco arriba (empieza abajo-izquierda)
+  const fs = size * 0.20;
 
-  const trackPath = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`;
-  const fillPath  = pct > 0.01
-    ? `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`
-    : '';
-
-  const fs = size * 0.22;
-
-  return `<svg width="${size}" height="${size*0.65}" viewBox="0 0 ${size} ${size*0.65}" xmlns="http://www.w3.org/2000/svg">
-    <path d="${trackPath}" fill="none" stroke="#1a1a3a" stroke-width="${size*0.12}" stroke-linecap="round"/>
-    ${fillPath ? `<path d="${fillPath}" fill="none" stroke="${color}" stroke-width="${size*0.12}" stroke-linecap="round"/>` : ''}
-    <text x="${cx}" y="${cy+2}" text-anchor="middle" dominant-baseline="middle"
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${cx}" cy="${cy}" r="${r}"
+      fill="none" stroke="#1a1a3a" stroke-width="${size*0.10}"
+      stroke-dasharray="${arcLen} ${circ - arcLen}"
+      stroke-dashoffset="${circ * 0.625}"
+      stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}"
+      fill="none" stroke="${color}" stroke-width="${size*0.10}"
+      stroke-dasharray="${dashFill} ${dashGap}"
+      stroke-dashoffset="${circ * 0.625}"
+      stroke-linecap="round"
+      style="transition:stroke-dasharray .8s ease"/>
+    <text x="${cx}" y="${cy + size*0.07}" text-anchor="middle" dominant-baseline="middle"
       font-family="'Press Start 2P',monospace" font-size="${fs}" fill="${color}">${prom}</text>
   </svg>`;
 }
@@ -963,7 +961,7 @@ function renderCard(designer, idx, visibleTasks) {
       </div>
       <div class="head-info">
         <div class="designer-name">${firstName}</div>
-        <div class="designer-role">${(designer.title||'DISEÑADOR').toUpperCase().substring(0,22)}</div>
+        <div class="designer-role">${(designer.title||'DISEÑADOR').toUpperCase()}</div>
         ${brandTagsHtml(brands)}
         <div class="bars" style="margin-top:4px;">
           <div class="bar-row"><span class="bar-icon">⚡</span><div class="bar-track"><div class="bar-fill bar-active" style="width:${hpPct}%"></div></div><span class="bar-num" style="color:var(--red)">${active_count}</span></div>
