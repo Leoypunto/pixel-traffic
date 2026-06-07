@@ -515,6 +515,11 @@
   <div class="settings-title">⚙ SETTINGS</div>
   <div class="settings-sub">EDITAR HABILIDADES Y RATING DE CADA DISEÑADOR</div>
   <div class="settings-grid" id="settings-grid"></div>
+  <div style="margin-top:24px;display:flex;justify-content:flex-end;">
+    <button class="settings-save-btn" id="save-all-btn" onclick="saveAllSkills()" style="max-width:320px;">
+      GUARDAR TODOS LOS CAMBIOS
+    </button>
+  </div>
 </div>
 
 <div id="metrics-view">
@@ -1340,11 +1345,12 @@ function getFiltered() {
   // Sort
   if (sortBy === 'nombre') list.sort((a,b) => nickname(a.name).localeCompare(nickname(b.name)));
   else if (sortBy === 'valor') {
-    list.sort((a,b) => {
-      const sa = a.skills ? (typeof a.skills==='string'?JSON.parse(a.skills):a.skills) : null;
-      const sb = b.skills ? (typeof b.skills==='string'?JSON.parse(b.skills):b.skills) : null;
-      return (sb?.promedio||0) - (sa?.promedio||0);
-    });
+    const getRating = d => {
+      if (STAR_RATINGS[d.name] !== undefined) return STAR_RATINGS[d.name];
+      const sk = d.skills ? (typeof d.skills==='string'?JSON.parse(d.skills):d.skills) : null;
+      return sk?.star_rating ?? sk?.promedio ?? 0;
+    };
+    list.sort((a,b) => getRating(b) - getRating(a));
   } else {
     list.sort((a,b) => {
       const ma = _filterMeta.get(a)?.matchCount ?? a.active_count;
@@ -1587,9 +1593,6 @@ function renderSettings() {
         </div>
       </div>
 
-      <button class="settings-save-btn" id="ssb-${i}" onclick="saveDesignerSkills(${i})">
-        GUARDAR CAMBIOS
-      </button>
     </div>`;
   }).join('');
 
@@ -1643,10 +1646,27 @@ function applyStarRating(idx, rating) {
   });
 }
 
-async function saveDesignerSkills(idx) {
-  const d   = allDesigners[idx];
-  const btn = document.getElementById(`ssb-${idx}`);
+async function saveAllSkills() {
+  const btn = document.getElementById('save-all-btn');
+  btn.textContent = 'GUARDANDO...';
+  btn.classList.add('saving');
+
+  const promises = allDesigners.map((_, idx) => saveDesignerSkills(idx, true));
+  await Promise.all(promises);
+
+  btn.textContent = '✓ TODO GUARDADO';
+  btn.classList.remove('saving');
+  btn.classList.add('saved');
+  setTimeout(() => {
+    btn.textContent = 'GUARDAR TODOS LOS CAMBIOS';
+    btn.classList.remove('saved');
+  }, 2500);
+}
+
+async function saveDesignerSkills(idx, silent = false) {
+  const d    = allDesigners[idx];
   const card = document.getElementById(`sc-${idx}`);
+  if (!card) return;
 
   const sliders = card.querySelectorAll('.skill-slider');
   const arte      = +sliders[0].value;
@@ -1656,9 +1676,6 @@ async function saveDesignerSkills(idx) {
   const nivel     = document.getElementById(`sn-${idx}`).value;
   const star_rating = +document.getElementById(`sr-${idx}`).dataset.rating;
 
-  btn.textContent = 'GUARDANDO...';
-  btn.classList.add('saving');
-
   try {
     const res = await fetch(`/api/designers/${encodeURIComponent(d.name)}/skills`, {
       method: 'PUT',
@@ -1667,17 +1684,11 @@ async function saveDesignerSkills(idx) {
     });
     const data = await res.json();
     if (data.ok) {
-      // Update local state
       d.skills = JSON.stringify(data.skills);
       STAR_RATINGS[d.name] = star_rating;
-      btn.textContent = '✓ GUARDADO';
-      btn.classList.remove('saving');
-      btn.classList.add('saved');
-      setTimeout(() => { btn.textContent = 'GUARDAR CAMBIOS'; btn.classList.remove('saved'); }, 2000);
     }
   } catch(e) {
-    btn.textContent = 'ERROR — REINTENTAR';
-    btn.classList.remove('saving');
+    console.error('Error saving', d.name, e);
   }
 }
 
@@ -1739,7 +1750,7 @@ function renderRanking(ranking) {
         <div class="hbar-track">
           <div class="hbar-fill" style="width:${pct}%;background:${r.color}"></div>
         </div>
-        ${starsHtml(r.count, max, r.color)}
+        <span class="hbar-val" style="color:${r.color}">${r.count}</span>
       </div>`;
     }).join('');
 }
@@ -1753,7 +1764,7 @@ function renderClientes(clientes) {
       <div class="hbar-track">
         <div class="hbar-fill" style="width:${pct}%;background:linear-gradient(90deg,#0077b6,#00bfff)"></div>
       </div>
-      ${starsHtml(c.count, max, '#00bfff')}
+      <span class="hbar-val">${c.count}</span>
     </div>`;
   }).join('');
 }
