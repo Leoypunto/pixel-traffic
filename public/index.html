@@ -54,6 +54,70 @@
     .filter-chip:hover,.filter-chip.active { color:var(--text); border-color:var(--blue); }
     .filter-chip.active { background:rgba(0,191,255,.1); color:var(--blue); }
 
+    /* ─── SEARCH / ADVANCED FILTERS BAR ──────────────────────────── */
+    .search-bar {
+      padding:10px 24px 12px; background:#09091e;
+      border-bottom:2px solid var(--border);
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .search-input-wrap { position:relative; flex:1; min-width:180px; max-width:320px; }
+    .search-input {
+      font-family:'Press Start 2P',monospace; font-size:6px;
+      width:100%; padding:7px 10px 7px 28px;
+      background:#0a0a1a; color:var(--text);
+      border:2px solid var(--border); outline:none;
+      transition:border-color .15s;
+    }
+    .search-input:focus { border-color:var(--blue); }
+    .search-input::placeholder { color:var(--dim); }
+    .search-icon { position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:8px; color:var(--dim); pointer-events:none; }
+    .search-clear { position:absolute; right:8px; top:50%; transform:translateY(-50%); font-family:'Press Start 2P',monospace; font-size:8px; color:var(--dim); background:none; border:none; cursor:pointer; display:none; line-height:1; padding:0; }
+    .search-clear.visible { display:block; }
+    .search-clear:hover { color:var(--red); }
+
+    .adv-sep { width:1px; height:24px; background:var(--border); flex-shrink:0; }
+
+    /* estado chips — scrollable row */
+    .estado-chips { display:flex; gap:5px; overflow-x:auto; flex:1; padding-bottom:2px; }
+    .estado-chips::-webkit-scrollbar { height:2px; }
+    .estado-chips::-webkit-scrollbar-thumb { background:var(--border); }
+    .estado-chip {
+      font-family:'Press Start 2P',monospace; font-size:5px;
+      padding:4px 8px; background:var(--panel); color:var(--dim);
+      border:1px solid var(--border); cursor:pointer;
+      white-space:nowrap; transition:all .1s; flex-shrink:0;
+    }
+    .estado-chip:hover { color:var(--text); border-color:var(--blue); }
+    .estado-chip.active { color:var(--blue); border-color:var(--blue); background:rgba(0,191,255,.1); }
+
+    /* cliente select */
+    .cliente-select {
+      font-family:'Press Start 2P',monospace; font-size:5px;
+      padding:6px 8px; background:#0a0a1a; color:var(--dim);
+      border:2px solid var(--border); cursor:pointer; outline:none;
+      max-width:140px;
+    }
+    .cliente-select:focus { border-color:var(--blue); color:var(--text); }
+
+    /* sort chips */
+    .sort-chips { display:flex; gap:5px; }
+    .sort-chip {
+      font-family:'Press Start 2P',monospace; font-size:5px;
+      padding:4px 8px; background:var(--panel); color:var(--dim);
+      border:1px solid var(--border); cursor:pointer; white-space:nowrap;
+      transition:all .1s;
+    }
+    .sort-chip:hover { color:var(--text); }
+    .sort-chip.active { color:var(--gold); border-color:var(--gold); background:rgba(255,215,0,.07); }
+
+    /* results count */
+    .results-count { font-size:5px; color:var(--dim); white-space:nowrap; margin-left:auto; }
+    .results-count strong { color:var(--gold); }
+
+    /* highlight match */
+    .task-match { background:rgba(255,215,0,.15); }
+    mark { background:rgba(255,215,0,.35); color:var(--gold); font-style:normal; }
+
     /* Grid */
     main { padding:20px; max-width:1800px; margin:0 auto; }
     .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px,1fr)); gap:16px; }
@@ -300,11 +364,63 @@
 </header>
 
 <div class="filters">
-  <span class="filter-label">FILTRAR:</span>
+  <span class="filter-label">MOSTRAR:</span>
   <button class="filter-chip active" onclick="setFilter('all',this)">TODOS</button>
   <button class="filter-chip" onclick="setFilter('busy',this)">BUSY (5+)</button>
   <button class="filter-chip" onclick="setFilter('active',this)">CON TAREAS</button>
   <button class="filter-chip" onclick="setFilter('idle',this)">SIN TAREAS</button>
+</div>
+
+<div class="search-bar">
+  <!-- BUSCAR -->
+  <div class="search-input-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="search-input" type="text" placeholder="BUSCAR TAREA..."
+      oninput="onSearch(this.value)" autocomplete="off" spellcheck="false" />
+    <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+  </div>
+
+  <div class="adv-sep"></div>
+
+  <!-- ESTADO -->
+  <span class="filter-label" style="flex-shrink:0">ESTADO:</span>
+  <div class="estado-chips" id="estado-chips">
+    <button class="estado-chip active" onclick="setEstado('',this)">TODOS</button>
+    <button class="estado-chip" onclick="setEstado('Diseño',this)">DISEÑO</button>
+    <button class="estado-chip" onclick="setEstado('Creatividad',this)">CREATIVIDAD</button>
+    <button class="estado-chip" onclick="setEstado('En Aprobación',this)">EN APROBACIÓN</button>
+    <button class="estado-chip" onclick="setEstado('Cambios en Diseño',this)">CAMBIOS</button>
+    <button class="estado-chip" onclick="setEstado('Animación',this)">ANIMACIÓN</button>
+    <button class="estado-chip" onclick="setEstado('Edición',this)">EDICIÓN</button>
+    <button class="estado-chip" onclick="setEstado('Finalizar',this)">FINALIZAR</button>
+    <button class="estado-chip" onclick="setEstado('stand by',this)">STAND BY</button>
+  </div>
+
+  <div class="adv-sep"></div>
+
+  <!-- CLIENTE -->
+  <select class="cliente-select" id="cliente-select" onchange="setCliente(this.value)">
+    <option value="">CLIENTE: TODOS</option>
+    <option>Steven´s</option><option>Betcha</option><option>La Doña</option>
+    <option>Multiplaza</option><option>Xtra</option><option>Banisi</option>
+    <option>Nissan</option><option>Enna</option><option>Metromall</option>
+    <option>Byd</option><option>Madcam</option><option>Infiniti</option>
+    <option>La Alcaldia</option><option>El Costo</option><option>Bmw</option>
+    <option>Volkswagen</option><option>Motorrad</option><option>Mini</option>
+    <option>Cable &amp; Wireless - Mas Movil</option><option>Titán</option>
+  </select>
+
+  <div class="adv-sep"></div>
+
+  <!-- ORDENAR -->
+  <span class="filter-label" style="flex-shrink:0">ORDEN:</span>
+  <div class="sort-chips">
+    <button class="sort-chip active" onclick="setSort('carga',this)">⚡ CARGA</button>
+    <button class="sort-chip" onclick="setSort('nombre',this)">A-Z</button>
+    <button class="sort-chip" onclick="setSort('valor',this)">★ VALOR</button>
+  </div>
+
+  <span class="results-count" id="results-count"></span>
 </div>
 
 <main><div class="grid" id="grid"></div></main>
@@ -411,8 +527,13 @@ let currentDate = new Date().toISOString().slice(0, 10);
 let allTimeMode = false;
 let currentDesignerIdx = null;
 let currentDTab = 'active';
-// Mapa global de tareas para evitar problemas de escape en onclick
 const taskMap = {};
+
+// v0.3 — search & advanced filters
+let searchQuery  = '';
+let filterEstado = '';
+let filterCliente = '';
+let sortBy = 'carga';
 
 // ─── PIXEL ART ──────────────────────────────────────────────────────────
 function drawPixelChar(canvas, color, seed) {
@@ -792,13 +913,14 @@ function renderDTasks() {
 }
 
 // ─── TASK HTML (card) ─────────────────────────────────────────────────────
-function taskHtml(t, color) {
+function taskHtml(t, color, query) {
   const key = 'tk_' + (t.id || Math.random().toString(36).slice(2));
   taskMap[key] = { task: t, color: color || '#00bfff' };
-  return `<div class="task-item" onclick="openTaskByKey('${key}')">
+  const title = query ? highlightText(t.title||'(sin título)', query) : (t.title||'(sin título)');
+  return `<div class="task-item${query?'  task-match':''}" onclick="openTaskByKey('${key}')">
     <span class="task-bullet">▶</span>
     <div class="task-body">
-      <div class="task-title" title="${(t.title||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}">${t.title||'(sin título)'}</div>
+      <div class="task-title" title="${(t.title||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}">${title}</div>
       <div class="task-meta">
         ${val(t.cliente)?`<span class="tag tag-client">${t.cliente}</span>`:''}
         ${val(t.estado) ?`<span class="tag tag-status">${t.estado}</span>`:''}
@@ -814,7 +936,7 @@ function openTaskByKey(key) {
 }
 
 // ─── RENDER CARD ──────────────────────────────────────────────────────────
-function renderCard(designer, idx) {
+function renderCard(designer, idx, visibleTasks) {
   const {name,color,active_count,completed_count,active_tasks} = designer;
   const skills = designer.skills ? (typeof designer.skills === 'string' ? JSON.parse(designer.skills) : designer.skills) : null;
   const brands = parseBrands(designer.brands);
@@ -824,11 +946,12 @@ function renderCard(designer, idx) {
   const levelLabel = nivel ? nivel.toUpperCase() : getLevel(completed_count, active_count);
   const firstName = nickname(name);
   const hpPct = Math.min(100,(active_count/12)*100);
-  const VISIBLE=5, more=active_tasks.length-VISIBLE;
+  const tasks = visibleTasks || active_tasks;
+  const VISIBLE=5, more=tasks.length-VISIBLE;
 
-  const tasksInner = active_tasks.length===0
+  const tasksInner = tasks.length===0
     ? `<div class="no-tasks">▷ SIN TAREAS ACTIVAS ◁</div>`
-    : active_tasks.slice(0,VISIBLE).map(t=>taskHtml(t,color)).join('')
+    : tasks.slice(0,VISIBLE).map(t=>taskHtml(t,color,searchQuery)).join('')
       + (more>0?`<button class="show-more" onclick="expandCard(${idx}, event)">▼ +${more} TAREAS MÁS</button>`:'');
 
   return `<div class="card" id="card-${idx}">
@@ -851,7 +974,9 @@ function renderCard(designer, idx) {
     </div>
     ${skillStripHtml(skills)}
     <div class="task-list">
-      <div class="task-header">TAREAS ACTIVAS <span>${active_count}</span></div>
+      <div class="task-header">
+        ${visibleTasks ? `RESULTADOS <span>${tasks.length}</span> <span style="color:var(--dim);font-size:4px;">DE ${active_count} ACTIVAS</span>` : `TAREAS ACTIVAS <span>${active_count}</span>`}
+      </div>
       <div id="tl-${idx}">${tasksInner}</div>
     </div>
   </div>`;
@@ -860,10 +985,13 @@ function renderCard(designer, idx) {
 function expandCard(idx, e) {
   e.stopPropagation();
   const d = allDesigners[idx];
-  document.getElementById(`tl-${idx}`).innerHTML = d.active_tasks.map(t=>taskHtml(t,d.color)).join('');
+  const hasAdvanced = searchQuery || filterEstado || filterCliente;
+  const tasks = hasAdvanced ? d.active_tasks.filter(taskMatches) : d.active_tasks;
+  document.getElementById(`tl-${idx}`).innerHTML = tasks.map(t=>taskHtml(t,d.color,searchQuery)).join('');
 }
 
 // ─── FILTER / GRID ────────────────────────────────────────────────────────
+// ─── FILTER CONTROLS ─────────────────────────────────────────────────────
 function setFilter(f,btn) {
   currentFilter=f;
   document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
@@ -871,20 +999,113 @@ function setFilter(f,btn) {
   renderGrid();
 }
 
+function onSearch(q) {
+  searchQuery = q.trim().toLowerCase();
+  document.getElementById('search-clear').classList.toggle('visible', searchQuery.length > 0);
+  renderGrid();
+}
+
+function clearSearch() {
+  searchQuery = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').classList.remove('visible');
+  renderGrid();
+}
+
+function setEstado(e, btn) {
+  filterEstado = e;
+  document.querySelectorAll('.estado-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function setCliente(v) {
+  filterCliente = v;
+  renderGrid();
+}
+
+function setSort(s, btn) {
+  sortBy = s;
+  document.querySelectorAll('.sort-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+// ─── TASK MATCHING ────────────────────────────────────────────────────────
+function taskMatches(t) {
+  if (searchQuery && !(t.title||'').toLowerCase().includes(searchQuery)) return false;
+  if (filterEstado && (t.estado||'') !== filterEstado) return false;
+  if (filterCliente && (t.cliente||'').toLowerCase() !== filterCliente.toLowerCase()) return false;
+  return true;
+}
+
+function highlightText(text, query) {
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query);
+  if (idx < 0) return text;
+  return text.slice(0,idx) + `<mark>${text.slice(idx, idx+query.length)}</mark>` + text.slice(idx+query.length);
+}
+
+// ─── FILTER + SORT ────────────────────────────────────────────────────────
 function getFiltered() {
-  if(currentFilter==='busy')   return allDesigners.filter(d=>d.active_count>=5);
-  if(currentFilter==='active') return allDesigners.filter(d=>d.active_count>0);
-  if(currentFilter==='idle')   return allDesigners.filter(d=>d.active_count===0);
-  return allDesigners;
+  const hasAdvanced = searchQuery || filterEstado || filterCliente;
+
+  let list = allDesigners.map(d => {
+    // Apply task-level filters when advanced filters are active
+    if (hasAdvanced) {
+      const matching = (d.active_tasks||[]).filter(taskMatches);
+      return { ...d, _visibleTasks: matching, _matchCount: matching.length };
+    }
+    return { ...d, _visibleTasks: d.active_tasks||[], _matchCount: d.active_count };
+  });
+
+  // Designer-level filter
+  if (currentFilter === 'busy')   list = list.filter(d => d.active_count >= 5);
+  if (currentFilter === 'active') list = list.filter(d => d.active_count > 0);
+  if (currentFilter === 'idle')   list = list.filter(d => d.active_count === 0);
+
+  // Hide designers with no matching tasks when advanced filters active
+  if (hasAdvanced) list = list.filter(d => d._matchCount > 0);
+
+  // Sort
+  if (sortBy === 'nombre') list.sort((a,b) => nickname(a.name).localeCompare(nickname(b.name)));
+  else if (sortBy === 'valor') {
+    list.sort((a,b) => {
+      const sa = a.skills ? (typeof a.skills==='string'?JSON.parse(a.skills):a.skills) : null;
+      const sb = b.skills ? (typeof b.skills==='string'?JSON.parse(b.skills):b.skills) : null;
+      return (sb?.promedio||0) - (sa?.promedio||0);
+    });
+  } else {
+    // carga: by _matchCount when filtered, else active_count
+    list.sort((a,b) => (b._matchCount||b.active_count) - (a._matchCount||a.active_count));
+  }
+
+  return list;
 }
 
 function renderGrid() {
-  const filtered=getFiltered();
-  document.getElementById('grid').innerHTML = filtered.map(d=>renderCard(d,allDesigners.indexOf(d))).join('');
+  const filtered = getFiltered();
+  const hasAdvanced = searchQuery || filterEstado || filterCliente;
+
+  document.getElementById('grid').innerHTML = filtered.map(d => {
+    const idx = allDesigners.indexOf(d);
+    return renderCard(d, idx, hasAdvanced ? d._visibleTasks : null);
+  }).join('');
+
   filtered.forEach(d => {
-    const i=allDesigners.indexOf(d), c=document.getElementById(`cv-${i}`);
-    if(c) drawPixelChar(c, d.color, i*7+1);
+    const i = allDesigners.indexOf(d);
+    const c = document.getElementById(`cv-${i}`);
+    if (c) drawPixelChar(c, d.color, i*7+1);
   });
+
+  // Results count
+  const rc = document.getElementById('results-count');
+  if (hasAdvanced) {
+    const total = filtered.reduce((s,d)=>s+d._matchCount,0);
+    rc.innerHTML = `<strong>${total}</strong> TAREAS · <strong>${filtered.length}</strong> DISEÑADORES`;
+  } else {
+    rc.innerHTML = '';
+  }
 }
 
 // ─── DATE HELPERS ─────────────────────────────────────────────────────────
