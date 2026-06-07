@@ -541,8 +541,19 @@ function nivelClass(nivel) {
 
 function skillStripHtml(skills) {
   if (!skills) return '';
+  // valor general: arco canvas inline
+  const prom = skills.promedio || 0;
+  const gaugeId = 'gauge_' + Math.random().toString(36).slice(2,7);
+  const gaugeSvg = valorGaugeSvg(prom, 48);
+
   return `<div class="skill-strip">
-    <div class="skill-strip-title">STATS</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+      <div class="skill-strip-title" style="flex:1">STATS</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+        ${gaugeSvg}
+        <span style="font-size:4px;color:var(--dim);letter-spacing:1px;">VALOR</span>
+      </div>
+    </div>
     ${SKILL_DEFS.map(s => {
       const pct = (skills[s.key] / 5) * 100;
       return `<div class="skill-row">
@@ -551,10 +562,43 @@ function skillStripHtml(skills) {
         <div class="skill-track">
           <div class="skill-fill" style="width:${pct}%;background:${s.grad}"></div>
         </div>
-        <span class="skill-num" style="color:${s.color}">${skills[s.key]}</span>
       </div>`;
     }).join('')}
   </div>`;
+}
+
+function valorGaugeSvg(prom, size) {
+  // Arco semicircular SVG — prom de 1 a 5
+  const pct   = (prom - 1) / 4;           // normalizado 0-1
+  const r     = size * 0.38;
+  const cx    = size / 2;
+  const cy    = size * 0.58;
+  const start = Math.PI;                   // izquierda (180°)
+  const end   = 2 * Math.PI;              // derecha (360°)
+  const sweep = start + pct * Math.PI;
+
+  const x1 = cx + r * Math.cos(start);
+  const y1 = cy + r * Math.sin(start);
+  const x2 = cx + r * Math.cos(sweep);
+  const y2 = cy + r * Math.sin(sweep);
+  const large = pct > 0.5 ? 1 : 0;
+
+  // color según valor
+  const color = prom >= 4.5 ? '#ffd700' : prom >= 3.5 ? '#a855f7' : prom >= 2.5 ? '#00bfff' : prom >= 1.5 ? '#f97316' : '#6060a0';
+
+  const trackPath = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`;
+  const fillPath  = pct > 0.01
+    ? `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`
+    : '';
+
+  const fs = size * 0.22;
+
+  return `<svg width="${size}" height="${size*0.65}" viewBox="0 0 ${size} ${size*0.65}" xmlns="http://www.w3.org/2000/svg">
+    <path d="${trackPath}" fill="none" stroke="#1a1a3a" stroke-width="${size*0.12}" stroke-linecap="round"/>
+    ${fillPath ? `<path d="${fillPath}" fill="none" stroke="${color}" stroke-width="${size*0.12}" stroke-linecap="round"/>` : ''}
+    <text x="${cx}" y="${cy+2}" text-anchor="middle" dominant-baseline="middle"
+      font-family="'Press Start 2P',monospace" font-size="${fs}" fill="${color}">${prom}</text>
+  </svg>`;
 }
 
 function skillPanelHtml(skills) {
@@ -563,32 +607,34 @@ function skillPanelHtml(skills) {
   const vals = SKILL_DEFS.map(s => ({ label: s.label, val: skills[s.key] }));
   const maxS  = vals.reduce((a,b) => b.val > a.val ? b : a);
   const minS  = vals.reduce((a,b) => b.val < a.val ? b : a);
+  const gaugeBig = valorGaugeSvg(skills.promedio, 90);
 
   return `
     <div class="skill-panel">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <span class="nivel-badge ${nClass}">${(skills.nivel||'Mid').toUpperCase()}</span>
-        <span style="font-size:4.5px;color:var(--dim);letter-spacing:2px;">STATS DE HABILIDAD</span>
-      </div>
-      ${SKILL_DEFS.map(s => {
-        const pct = (skills[s.key] / 5) * 100;
-        return `<div class="skill-big-row">
-          <span class="skill-big-icon">${s.icon}</span>
-          <div class="skill-big-info">
-            <div class="skill-big-label">${s.label}</div>
-            <div class="skill-big-track">
-              <div class="skill-big-fill" style="width:${pct}%;background:${s.grad}"></div>
-            </div>
+      <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:14px;">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <span class="nivel-badge ${nClass}">${(skills.nivel||'Mid').toUpperCase()}</span>
+            <span style="font-size:4.5px;color:var(--dim);letter-spacing:2px;">STATS DE HABILIDAD</span>
           </div>
-          <span class="skill-big-num" style="color:${s.color}">${skills[s.key]}<span style="font-size:6px;color:var(--dim)">/5</span></span>
-        </div>`;
-      }).join('')}
-      <div class="skill-promedio">
-        <div>
-          <div class="skill-promedio-label">PROMEDIO PONDERADO</div>
-          <div style="font-size:5px;color:var(--dim);margin-top:3px;">DA×40% + EJ×20% + AN×20% + VE×20%</div>
+          ${SKILL_DEFS.map(s => {
+            const pct = (skills[s.key] / 5) * 100;
+            return `<div class="skill-big-row">
+              <span class="skill-big-icon">${s.icon}</span>
+              <div class="skill-big-info">
+                <div class="skill-big-label">${s.label}</div>
+                <div class="skill-big-track">
+                  <div class="skill-big-fill" style="width:${pct}%;background:${s.grad}"></div>
+                </div>
+              </div>
+              <span class="skill-big-num" style="color:${s.color}">${skills[s.key]}<span style="font-size:6px;color:var(--dim)">/5</span></span>
+            </div>`;
+          }).join('')}
         </div>
-        <div class="skill-promedio-val">${skills.promedio}</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:24px;">
+          ${gaugeBig}
+          <span style="font-size:5px;color:var(--dim);letter-spacing:2px;">VALOR GENERAL</span>
+        </div>
       </div>
       <div class="skill-fortaleza">
         <div class="skill-fort-item">
@@ -778,7 +824,6 @@ function renderCard(designer, idx) {
   const levelLabel = nivel ? nivel.toUpperCase() : getLevel(completed_count, active_count);
   const firstName = nickname(name);
   const hpPct = Math.min(100,(active_count/12)*100);
-  const xpPct = Math.min(100,(completed_count/40)*100);
   const VISIBLE=5, more=active_tasks.length-VISIBLE;
 
   const tasksInner = active_tasks.length===0
@@ -799,7 +844,6 @@ function renderCard(designer, idx) {
         ${brandTagsHtml(brands)}
         <div class="bars" style="margin-top:4px;">
           <div class="bar-row"><span class="bar-icon">⚡</span><div class="bar-track"><div class="bar-fill bar-active" style="width:${hpPct}%"></div></div><span class="bar-num" style="color:var(--red)">${active_count}</span></div>
-          <div class="bar-row"><span class="bar-icon">★</span><div class="bar-track"><div class="bar-fill bar-done" style="width:${xpPct}%"></div></div><span class="bar-num" style="color:var(--green)">${completed_count}</span></div>
         </div>
       </div>
       <div class="status-badge ${bclass}">${badge}</div>
