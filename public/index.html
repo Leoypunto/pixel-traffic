@@ -90,14 +90,35 @@
     .estado-chip:hover { color:var(--text); border-color:var(--blue); }
     .estado-chip.active { color:var(--blue); border-color:var(--blue); background:rgba(0,191,255,.1); }
 
-    /* cliente select */
-    .cliente-select {
-      font-family:'Press Start 2P',monospace; font-size:5px;
-      padding:6px 8px; background:#0a0a1a; color:var(--dim);
-      border:2px solid var(--border); cursor:pointer; outline:none;
-      max-width:140px;
+    /* custom dropdown */
+    .px-dropdown { position:relative; display:inline-block; }
+    .px-dropdown-btn {
+      font-family:'Press Start 2P',monospace; font-size:6px;
+      padding:7px 28px 7px 10px; background:#0a0a1a; color:var(--text);
+      border:2px solid var(--border); cursor:pointer; white-space:nowrap;
+      user-select:none; min-width:130px; display:flex; align-items:center;
+      justify-content:space-between; gap:8px; transition:border-color .1s;
     }
-    .cliente-select:focus { border-color:var(--blue); color:var(--text); }
+    .px-dropdown-btn:hover, .px-dropdown.open .px-dropdown-btn { border-color:var(--blue); color:var(--blue); }
+    .px-dropdown-arrow { font-size:7px; flex-shrink:0; transition:transform .15s; }
+    .px-dropdown.open .px-dropdown-arrow { transform:rotate(180deg); }
+    .px-dropdown-menu {
+      display:none; position:absolute; top:calc(100% + 4px); left:0; min-width:100%;
+      background:#0d0d28; border:2px solid var(--blue); z-index:50;
+      max-height:220px; overflow-y:auto;
+    }
+    .px-dropdown-menu::-webkit-scrollbar { width:4px; }
+    .px-dropdown-menu::-webkit-scrollbar-thumb { background:var(--border); }
+    .px-dropdown.open .px-dropdown-menu { display:block; }
+    .px-dropdown-item {
+      font-family:'Press Start 2P',monospace; font-size:6px;
+      padding:8px 12px; color:var(--dim); cursor:pointer;
+      border-bottom:1px solid rgba(255,255,255,.04); white-space:nowrap;
+      transition:background .1s, color .1s;
+    }
+    .px-dropdown-item:hover { background:rgba(0,191,255,.08); color:var(--text); }
+    .px-dropdown-item.selected { color:var(--blue); background:rgba(0,191,255,.06); }
+    .px-dropdown-item:last-child { border-bottom:none; }
 
     /* sort chips */
     .sort-chips { display:flex; gap:5px; }
@@ -398,29 +419,29 @@
 
   <div class="adv-sep"></div>
 
-  <!-- MARCA -->
-  <select class="cliente-select" id="marca-select" onchange="setMarca(this.value)">
-    <option value="">MARCA: TODAS</option>
-    <option>Multiplaza</option><option>Metromall</option><option>Banisi</option>
-    <option>Alcaldía</option><option>Betcha</option><option>MadCam</option>
-    <option>Volkswagen</option><option>Steven's</option><option>General</option>
-    <option>Xtra</option><option>Más Móvil</option><option>FASA</option>
-    <option>Nissan</option>
-  </select>
-
-  <div class="adv-sep"></div>
-
-  <!-- CLIENTE -->
-  <select class="cliente-select" id="cliente-select" onchange="setCliente(this.value)">
-    <option value="">CLIENTE: TODOS</option>
-    <option>Steven´s</option><option>Betcha</option><option>La Doña</option>
-    <option>Multiplaza</option><option>Xtra</option><option>Banisi</option>
-    <option>Nissan</option><option>Enna</option><option>Metromall</option>
-    <option>Byd</option><option>Madcam</option><option>Infiniti</option>
-    <option>La Alcaldia</option><option>El Costo</option><option>Bmw</option>
-    <option>Volkswagen</option><option>Motorrad</option><option>Mini</option>
-    <option>Cable &amp; Wireless - Mas Movil</option><option>Titán</option>
-  </select>
+  <!-- CLIENTE (marca del diseñador) -->
+  <div class="px-dropdown" id="dd-marca">
+    <div class="px-dropdown-btn" onclick="toggleDropdown('dd-marca')">
+      <span id="dd-marca-label">CLIENTE: TODOS</span>
+      <span class="px-dropdown-arrow">▼</span>
+    </div>
+    <div class="px-dropdown-menu" id="dd-marca-menu">
+      <div class="px-dropdown-item selected" onclick="pickMarca('', this)">TODOS</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Multiplaza', this)">Multiplaza</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Metromall', this)">Metromall</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Banisi', this)">Banisi</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Alcaldía', this)">Alcaldía</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Betcha', this)">Betcha</div>
+      <div class="px-dropdown-item" onclick="pickMarca('MadCam', this)">MadCam</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Volkswagen', this)">Volkswagen</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Steven\'s', this)">Steven's</div>
+      <div class="px-dropdown-item" onclick="pickMarca('General', this)">General</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Xtra', this)">Xtra</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Más Móvil', this)">Más Móvil</div>
+      <div class="px-dropdown-item" onclick="pickMarca('FASA', this)">FASA</div>
+      <div class="px-dropdown-item" onclick="pickMarca('Nissan', this)">Nissan</div>
+    </div>
+  </div>
 
   <div class="adv-sep"></div>
 
@@ -1039,6 +1060,31 @@ function setMarca(v) {
   filterMarca = v;
   renderGrid();
 }
+
+// ─── CUSTOM DROPDOWN ─────────────────────────────────────────────────────
+function toggleDropdown(id) {
+  const dd = document.getElementById(id);
+  const isOpen = dd.classList.contains('open');
+  // cerrar todos
+  document.querySelectorAll('.px-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (!isOpen) dd.classList.add('open');
+}
+
+function pickMarca(val, el) {
+  filterMarca = val;
+  document.getElementById('dd-marca-label').textContent = val ? `CLIENTE: ${val.toUpperCase()}` : 'CLIENTE: TODOS';
+  document.querySelectorAll('#dd-marca-menu .px-dropdown-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('dd-marca').classList.remove('open');
+  renderGrid();
+}
+
+// cerrar dropdown al click fuera
+document.addEventListener('click', e => {
+  if (!e.target.closest('.px-dropdown')) {
+    document.querySelectorAll('.px-dropdown.open').forEach(d => d.classList.remove('open'));
+  }
+});
 
 function setSort(s, btn) {
   sortBy = s;
