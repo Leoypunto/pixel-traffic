@@ -365,6 +365,8 @@ let currentDate = new Date().toISOString().slice(0, 10);
 let allTimeMode = false;
 let currentDesignerIdx = null;
 let currentDTab = 'active';
+// Mapa global de tareas para evitar problemas de escape en onclick
+const taskMap = {};
 
 // ─── PIXEL ART ──────────────────────────────────────────────────────────
 function drawPixelChar(canvas, color, seed) {
@@ -542,7 +544,9 @@ function renderDTasks() {
 
   container.innerHTML = tasks.map(t => {
     const isDone = t.status === 'completed';
-    return `<div class="dtask-item" onclick="openTask(${JSON.stringify(t).replace(/"/g,'&quot;')}, '${d.color}')">
+    const key = 'tk_' + (t.id || Math.random().toString(36).slice(2));
+    taskMap[key] = { task: t, color: d.color };
+    return `<div class="dtask-item" onclick="openTaskByKey('${key}')">
       <span class="dtask-bullet">${isDone ? '✓' : '▶'}</span>
       <div class="dtask-body">
         <div class="dtask-title ${isDone?'dtask-status-done':''}">${t.title || '(sin título)'}</div>
@@ -560,12 +564,12 @@ function renderDTasks() {
 
 // ─── TASK HTML (card) ─────────────────────────────────────────────────────
 function taskHtml(t, color) {
-  const taskData = JSON.stringify(t).replace(/"/g, '&quot;');
-  const colorStr = color || 'var(--blue)';
-  return `<div class="task-item" onclick="openTask(${taskData}, '${colorStr}')">
+  const key = 'tk_' + (t.id || Math.random().toString(36).slice(2));
+  taskMap[key] = { task: t, color: color || '#00bfff' };
+  return `<div class="task-item" onclick="openTaskByKey('${key}')">
     <span class="task-bullet">▶</span>
     <div class="task-body">
-      <div class="task-title" title="${(t.title||'').replace(/"/g,'&quot;')}">${t.title||'(sin título)'}</div>
+      <div class="task-title" title="${(t.title||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}">${t.title||'(sin título)'}</div>
       <div class="task-meta">
         ${val(t.cliente)?`<span class="tag tag-client">${t.cliente}</span>`:''}
         ${val(t.estado) ?`<span class="tag tag-status">${t.estado}</span>`:''}
@@ -573,6 +577,11 @@ function taskHtml(t, color) {
       </div>
     </div>
   </div>`;
+}
+
+function openTaskByKey(key) {
+  const entry = taskMap[key];
+  if (entry) openTask(entry.task, entry.color);
 }
 
 // ─── RENDER CARD ──────────────────────────────────────────────────────────
