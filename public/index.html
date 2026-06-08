@@ -147,7 +147,7 @@
     .card { background:var(--panel); border:2px solid var(--border); position:relative; overflow:hidden; transition:transform .15s, box-shadow .15s; }
     .card:hover { transform:translate(-3px,-3px); box-shadow:5px 5px 0 rgba(255,255,255,.06); }
     .card-top-bar { height:3px; }
-    .card-head { padding:12px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; position:relative; cursor:pointer; }
+    .card-head { padding:12px 14px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:12px; position:relative; cursor:pointer; }
     .card-head:hover { background:rgba(255,255,255,.03); }
     .card-head-hint { position:absolute; bottom:4px; right:10px; font-size:4px; color:var(--dim); letter-spacing:1px; opacity:.6; }
 
@@ -160,10 +160,12 @@
       white-space:nowrap;
     }
 
-    /* Avatar */
-    .avatar { width:48px; height:48px; flex-shrink:0; border:2px solid var(--border); position:relative; }
+    /* Avatar — DDR card style */
+    .avatar { width:54px; height:74px; flex-shrink:0; border:2px solid var(--border); position:relative; overflow:hidden; background:#0a0a1a; display:flex; align-items:center; justify-content:center; }
     .avatar canvas { display:block; }
-    .avatar-level { position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); font-size:5px; color:var(--gold); background:var(--panel); border:1px solid var(--gold); padding:1px 4px; white-space:nowrap; z-index:2; }
+    .avatar::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,.12) 1px, rgba(0,0,0,.12) 2px); pointer-events:none; z-index:2; }
+    .avatar img.avatar-photo { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; filter:contrast(1.05) saturate(1.2) brightness(.92); }
+    .avatar-level { position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); font-size:5px; color:var(--gold); background:var(--panel); border:1px solid var(--gold); padding:1px 4px; white-space:nowrap; z-index:3; }
 
     .head-info { flex:1; min-width:0; }
     .designer-name { font-size:8px; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -440,7 +442,10 @@
       display:flex; align-items:center; gap:16px;
       position:sticky; top:0; background:var(--panel); z-index:5;
     }
-    .dmodal-avatar { width:56px; height:56px; border:2px solid var(--border); flex-shrink:0; }
+    .dmodal-avatar { width:90px; height:120px; border:2px solid var(--border); flex-shrink:0; position:relative; overflow:hidden; background:#0a0a1a; display:flex; align-items:center; justify-content:center; }
+    .dmodal-avatar::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,.12) 1px, rgba(0,0,0,.12) 2px); pointer-events:none; z-index:2; }
+    .dmodal-avatar img.avatar-photo { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; filter:contrast(1.05) saturate(1.2) brightness(.92); }
+    .dmodal-avatar canvas { display:block; }
     .dmodal-info { flex:1; }
     .dmodal-name { font-size:10px; color:var(--text); margin-bottom:4px; }
     .dmodal-sub  { font-size:5.5px; color:var(--dim); letter-spacing:2px; }
@@ -650,7 +655,7 @@
 <div class="modal-overlay" id="designer-modal" onclick="closeDesignerModal(event)">
   <div class="dmodal-box" id="designer-modal-box">
     <div class="dmodal-head">
-      <canvas class="dmodal-avatar" id="dm-avatar"></canvas>
+      <div class="dmodal-avatar" id="dm-avatar"></div>
       <div class="dmodal-info">
         <div class="dmodal-name" id="dm-name">—</div>
         <div class="dmodal-sub" id="dm-role">—</div>
@@ -756,6 +761,35 @@ let sortBy = 'carga';
 let filterMarca = '';
 
 // ─── PIXEL ART ──────────────────────────────────────────────────────────
+function loadPhotoAvatar(container, color, nick, seed, large) {
+  const slug = nick.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const applyFallback = () => {
+    container.style.borderColor = color + '44';
+    container.style.boxShadow = '';
+    container.innerHTML = '';
+    const cv = document.createElement('canvas');
+    container.appendChild(cv);
+    if (large) drawPixelCharLarge(cv, color, seed);
+    else       drawPixelChar(cv, color, seed);
+  };
+  const tryLoad = (exts, i) => {
+    if (i >= exts.length) { applyFallback(); return; }
+    const img = new Image();
+    img.onload = () => {
+      container.innerHTML = '';
+      const el = document.createElement('img');
+      el.className = 'avatar-photo';
+      el.src = img.src;
+      container.appendChild(el);
+      container.style.borderColor = color;
+      container.style.boxShadow = `0 0 10px ${color}99, 0 0 3px ${color}`;
+    };
+    img.onerror = () => tryLoad(exts, i + 1);
+    img.src = `/avatars/${slug}.${exts[i]}`;
+  };
+  tryLoad(['jpg', 'jpeg', 'png', 'webp'], 0);
+}
+
 function drawPixelChar(canvas, color, seed) {
   const ctx = canvas.getContext('2d'), S = 4;
   canvas.width = 48; canvas.height = 48;
@@ -1090,8 +1124,8 @@ function openDesigner(idx, e) {
   document.querySelectorAll('.dmodal-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.dmodal-tab')[0].classList.add('active');
 
-  const cvDm = document.getElementById('dm-avatar');
-  drawPixelCharLarge(cvDm, d.color, idx*7+1);
+  const dmAv = document.getElementById('dm-avatar');
+  loadPhotoAvatar(dmAv, d.color, nickname(d.name), idx*7+1, true);
   document.getElementById('designer-modal-box').style.borderColor = d.color + '66';
 
   renderDTasks();
@@ -1374,8 +1408,8 @@ function renderGrid() {
 
   filtered.forEach(d => {
     const i = allDesigners.indexOf(d);
-    const c = document.getElementById(`cv-${i}`);
-    if (c) drawPixelChar(c, d.color, i*7+1);
+    const av = document.getElementById(`cv-${i}`)?.parentElement;
+    if (av) loadPhotoAvatar(av, d.color, nickname(d.name), i*7+1, false);
   });
 
   // Results count
@@ -1570,7 +1604,7 @@ function renderSettings() {
 
     return `<div class="settings-card" id="sc-${i}">
       <div class="settings-card-head">
-        <canvas id="scv-${i}" width="40" height="40" style="border:2px solid ${d.color}44;flex-shrink:0"></canvas>
+        <div id="scv-${i}" style="width:40px;height:54px;flex-shrink:0;border:2px solid ${d.color}44;overflow:hidden;position:relative;background:#0a0a1a"></div>
         <div style="flex:1;min-width:0">
           <div class="settings-card-name">${nick}</div>
           <div class="settings-card-role">${(d.title||'DISEÑADOR').toUpperCase()}</div>
@@ -1596,32 +1630,9 @@ function renderSettings() {
     </div>`;
   }).join('');
 
-  // Draw pixel chars
   allDesigners.forEach((d, i) => {
-    const cv = document.getElementById(`scv-${i}`);
-    if (cv) {
-      const ctx = cv.getContext('2d'), S = 3;
-      cv.width = 40; cv.height = 40;
-      const rng = n => { let x = Math.sin((i*7+1)*13.7+n)*9999; return x-Math.floor(x); };
-      const parse = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-      const [r,g,b] = parse(d.color);
-      const sprites = [
-        [[0,1,1,1,0],[1,1,1,1,1],[1,0,1,0,1],[0,1,1,1,0],[0,1,0,1,0],[1,1,0,1,1],[1,0,0,0,1],[1,0,0,0,1]],
-        [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,1,0,1,0],[0,0,1,0,0],[0,1,1,1,0],[0,1,0,1,0],[1,0,0,0,1]],
-        [[1,1,0,0,0],[0,1,1,0,0],[0,1,1,1,0],[1,1,0,1,1],[0,1,1,1,0],[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1]],
-        [[0,1,1,1,0],[1,0,1,0,1],[1,1,1,1,1],[0,1,0,1,0],[0,1,1,1,0],[0,1,0,1,0],[1,1,0,1,1],[0,0,0,0,0]],
-      ];
-      const sp = sprites[Math.floor(rng(0)*4)];
-      const light = `rgb(${Math.min(255,r+70)},${Math.min(255,g+70)},${Math.min(255,b+70)})`;
-      const dark  = `rgb(${Math.max(0,r-40)},${Math.max(0,g-40)},${Math.max(0,b-40)})`;
-      ctx.clearRect(0,0,40,40);
-      sp.forEach((row,ri) => row.forEach((px,ci) => {
-        if(!px) return;
-        const x=(ci+1)*S+2, y=(ri+1)*S+1;
-        ctx.fillStyle = ri<3 ? light : (ri>5 ? dark : d.color);
-        ctx.fillRect(x,y,S,S);
-      }));
-    }
+    const av = document.getElementById(`scv-${i}`);
+    if (av) loadPhotoAvatar(av, d.color, nickname(d.name), i*7+1, false);
   });
 }
 
