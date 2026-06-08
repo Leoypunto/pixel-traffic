@@ -282,12 +282,13 @@
         0 0 0 1px rgba(0,0,0,.6),
         0 0 30px color-mix(in srgb, var(--cc, transparent) 25%, transparent);
       display: flex; flex-direction: column;
-      overflow: hidden; position: relative;
+      position: relative;
+      /* NO overflow:hidden — bloquea 3D transforms */
+      clip-path: inset(0);   /* alternativa que no aplana 3D */
       transform-style: preserve-3d;
       transform: perspective(900px) rotateX(0deg) rotateY(0deg);
       transition: box-shadow .15s ease;
       animation: cardEnter .35s ease-out both;
-      will-change: transform;
     }
     /* Marco interno estilo Smash — doble borde */
     .card::before {
