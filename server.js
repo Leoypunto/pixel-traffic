@@ -259,6 +259,7 @@ cron.schedule('*/15 8-18 * * 1-5', () => {
   scrape().then(r => console.log('[Cron]', r));
 });
 
+
 app.listen(PORT, () => {
   console.log(`🎮 Pixel Traffic → http://localhost:${PORT}`);
   const stats = queries.getStats.get();
