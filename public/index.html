@@ -1026,33 +1026,59 @@ let sortBy = 'carga';
 let filterMarca = '';
 
 // ─── PIXEL ART ──────────────────────────────────────────────────────────
+// Cache: nick → 'photo' | 'fallback' | null (pending)
+const _avatarCache = {};
+
 function loadPhotoAvatar(container, color, nick, seed, large) {
   const slug = nick.toLowerCase().replace(/[^a-z0-9]/g, '');
   // Detect if this is a full-width card-photo-inner (not a small avatar)
   const isFullWidth = container.classList.contains('card-photo-inner');
 
-  const applyFallback = () => {
+  // Si ya tenemos el resultado cacheado, aplica directamente sin requests HTTP
+  if (_avatarCache[slug] === 'fallback') {
+    applyFallbackDirect(); return;
+  }
+  if (_avatarCache[slug] === 'photo') {
+    // Re-use the known URL
+    applyPhotoFromCache(); return;
+  }
+
+  function applyPhotoFromCache() {
+    const ext = _avatarCache[slug + '_ext'] || 'jpg';
+    container.innerHTML = '';
+    const el = document.createElement('img');
+    el.className = 'avatar-photo';
+    el.src = `/avatars/${slug}.${ext}`;
+    container.appendChild(el);
+    if (!isFullWidth) { container.style.borderColor = color; container.style.boxShadow = `0 0 10px ${color}99,0 0 3px ${color}`; }
+  }
+
+  function applyFallbackDirect() {
     container.innerHTML = '';
     if (isFullWidth) {
-      // Para el nuevo layout: sprite centrado grande en fondo de color
       const wrap = document.createElement('div');
       wrap.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
       const cv = document.createElement('canvas');
       cv.style.cssText = 'image-rendering:pixelated;width:120px;height:120px;';
-      wrap.appendChild(cv);
-      container.appendChild(wrap);
+      wrap.appendChild(cv); container.appendChild(wrap);
       drawPixelCharLarge(cv, color, seed);
     } else {
       const cv = document.createElement('canvas');
       container.appendChild(cv);
-      if (large) drawPixelCharLarge(cv, color, seed);
-      else       drawPixelChar(cv, color, seed);
+      if (large) drawPixelCharLarge(cv, color, seed); else drawPixelChar(cv, color, seed);
     }
+  }
+
+  const applyFallback = () => {
+    _avatarCache[slug] = 'fallback';
+    applyFallbackDirect();
   };
   const tryLoad = (exts, i) => {
     if (i >= exts.length) { applyFallback(); return; }
     const img = new Image();
     img.onload = () => {
+      _avatarCache[slug] = 'photo';
+      _avatarCache[slug + '_ext'] = exts[i];
       container.innerHTML = '';
       const el = document.createElement('img');
       el.className = 'avatar-photo';
@@ -2107,7 +2133,8 @@ function renderDonut(estados) {
 
 // ─── 3D TILT EFFECT ──────────────────────────────────────────────────────
 function initCardTilt() {
-  document.querySelectorAll('.card').forEach(card => {
+  document.querySelectorAll('.card:not([data-tilt])').forEach(card => {
+    card.setAttribute('data-tilt', '1'); // mark as initialized
     const shine = card.querySelector('.card-shine');
 
     card.addEventListener('mouseenter', () => {
