@@ -38,6 +38,68 @@
     @keyframes menuPop { 0%{opacity:0;transform:scale(.9) translateY(10px)} 60%{transform:scale(1.03) translateY(-2px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
     @keyframes badgePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.85;transform:scale(1.04)} }
 
+    /* ═══════════════════════════════════════════════════════════════
+       MENÚ PRINCIPAL — Pantalla de inicio tipo videojuego
+    ═══════════════════════════════════════════════════════════════ */
+    #main-menu {
+      position:fixed; inset:0; z-index:300;
+      background: #06040f;
+      background-image:
+        linear-gradient(rgba(140,0,255,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(140,0,255,0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:36px;
+      transition: opacity .4s ease;
+    }
+    #main-menu::before {
+      content:''; position:absolute; inset:0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.07) 2px, rgba(0,0,0,.07) 4px);
+      pointer-events:none;
+    }
+    .mmenu-eyebrow { font-size:6px; color:var(--purple); letter-spacing:6px; text-shadow:0 0 12px var(--purple); }
+    .mmenu-logo {
+      font-size:30px; color:var(--gold); letter-spacing:4px; text-align:center; line-height:1.3;
+      text-shadow: 5px 5px 0 rgba(160,110,0,.9), 9px 9px 0 rgba(70,45,0,.7), 0 0 60px rgba(255,229,0,.3);
+      animation: flicker 5s infinite;
+    }
+    .mmenu-logo span { color:var(--blue); text-shadow: 5px 5px 0 rgba(0,80,160,.9), 9px 9px 0 rgba(0,30,70,.7), 0 0 40px rgba(0,229,255,.3); }
+    .mmenu-studio { font-size:6px; color:var(--dim); letter-spacing:4px; margin-top:-12px; }
+    .mmenu-tiles { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+    .mmenu-tile {
+      width:180px; height:150px; border:3px solid;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      cursor:pointer; gap:10px; position:relative; overflow:hidden;
+      transition:transform .08s, box-shadow .08s;
+      animation: menuPop .4s ease-out both;
+    }
+    .mmenu-tile::before {
+      content:''; position:absolute; inset:0;
+      background: repeating-linear-gradient(-50deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 8px);
+    }
+    .mmenu-tile:hover { transform:translate(-4px,-4px); }
+    .mmenu-tile:active { transform:translate(3px,3px); }
+    .mmenu-tile-icon { font-size:30px; position:relative; z-index:1; }
+    .mmenu-tile-name { font-size:8px; letter-spacing:1px; position:relative; z-index:1; }
+    .mmenu-tile-sub { font-size:4.5px; letter-spacing:2px; opacity:.6; position:relative; z-index:1; }
+    .mmenu-t-dash { background:rgba(0,229,255,.12); border-color:var(--blue); color:var(--blue);
+      box-shadow:6px 6px 0 rgba(0,80,140,.6); }
+    .mmenu-t-dash:hover { box-shadow:10px 10px 0 rgba(0,80,140,.7), 0 0 30px rgba(0,229,255,.2); }
+    .mmenu-t-met  { background:rgba(0,255,136,.1);  border-color:var(--green); color:var(--green);
+      box-shadow:6px 6px 0 rgba(0,120,60,.6); animation-delay:.08s; }
+    .mmenu-t-met:hover  { box-shadow:10px 10px 0 rgba(0,120,60,.7), 0 0 30px rgba(0,255,136,.2); }
+    .mmenu-t-set  { background:rgba(204,68,255,.1);  border-color:var(--purple); color:var(--purple);
+      box-shadow:6px 6px 0 rgba(100,0,160,.6); animation-delay:.16s; }
+    .mmenu-t-set:hover  { box-shadow:10px 10px 0 rgba(100,0,160,.7), 0 0 30px rgba(204,68,255,.2); }
+    .mmenu-start {
+      font-family:'Press Start 2P',monospace; font-size:11px; padding:14px 40px;
+      background:var(--gold); color:#000; border:none; cursor:pointer; letter-spacing:2px;
+      box-shadow:6px 6px 0 rgba(120,80,0,.7); transition:transform .08s, box-shadow .08s;
+      animation: badgePulse 1.8s ease-in-out infinite;
+    }
+    .mmenu-start:hover { transform:translate(-3px,-3px); box-shadow:9px 9px 0 rgba(120,80,0,.8); }
+    .mmenu-start:active { transform:translate(3px,3px); box-shadow:2px 2px 0 rgba(120,80,0,.6); animation:none; }
+    .mmenu-version { font-size:5px; color:var(--border); letter-spacing:2px; }
+
     /* Boot / Menu Screen */
     #loading {
       position:fixed; inset:0; z-index:200;
@@ -194,59 +256,111 @@
 
     /* Grid */
     main { padding:20px; max-width:1800px; margin:0 auto; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(360px,1fr)); gap:20px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(380px,1fr)); gap:20px; }
 
-    /* Card */
+    /* ═══════════════════════════════════════════════════════════════
+       CARD — Nuevo layout vertical: foto arriba, info abajo
+    ═══════════════════════════════════════════════════════════════ */
     .card {
-      background: color-mix(in srgb, var(--cc, #1a1060) 8%, var(--panel));
+      background: color-mix(in srgb, var(--cc, #1a0060) 20%, #050210);
       border: 3px solid var(--cc, var(--border));
-      box-shadow: 5px 5px 0 color-mix(in srgb, var(--cc, #000) 50%, #000),
-                  0 0 20px color-mix(in srgb, var(--cc, transparent) 20%, transparent);
-      position:relative; overflow:hidden;
+      box-shadow: 7px 7px 0 rgba(0,0,0,.75),
+                  0 0 30px color-mix(in srgb, var(--cc, transparent) 22%, transparent);
+      display: flex; flex-direction: column;
+      overflow: hidden; position: relative;
       transition: transform .1s ease, box-shadow .1s ease;
       animation: cardEnter .35s ease-out both;
     }
     .card:hover {
-      transform: translate(-4px,-4px);
-      box-shadow: 9px 9px 0 color-mix(in srgb, var(--cc, #000) 50%, #000),
-                  0 0 35px color-mix(in srgb, var(--cc, transparent) 35%, transparent);
+      transform: translate(-5px,-5px);
+      box-shadow: 12px 12px 0 rgba(0,0,0,.8),
+                  0 0 45px color-mix(in srgb, var(--cc, transparent) 35%, transparent);
     }
-    .card:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 color-mix(in srgb, var(--cc, #000) 50%, #000); }
-    .card-top-bar { height:6px; }
-    .card-head {
-      padding:14px 14px 12px;
-      border-bottom: 2px solid color-mix(in srgb, var(--cc, var(--border)) 30%, var(--border));
-      background: linear-gradient(135deg, color-mix(in srgb, var(--cc, transparent) 22%, transparent) 0%, transparent 70%);
-      display:flex; align-items:flex-start; gap:14px; position:relative; cursor:pointer; min-height:118px;
+    .card:active { transform: translate(3px,3px); box-shadow: 3px 3px 0 rgba(0,0,0,.7); }
+
+    /* Foto — ocupa la parte superior completa */
+    .card-photo {
+      width: 100%; height: 210px;
+      position: relative; overflow: hidden; flex-shrink: 0;
+      background: color-mix(in srgb, var(--cc, #220060) 45%, #020110);
+      cursor: pointer;
     }
-    .card-head:hover { background: linear-gradient(135deg, color-mix(in srgb, var(--cc, transparent) 30%, transparent) 0%, transparent 70%); }
-    .card-head-hint { position:absolute; bottom:6px; right:10px; font-size:4px; color:var(--dim); letter-spacing:1px; opacity:.5; }
+    .card-photo::before {
+      content:''; position:absolute; inset:0; z-index:1;
+      background: repeating-linear-gradient(-50deg, rgba(0,0,0,.12) 0, rgba(0,0,0,.12) 1px, transparent 1px, transparent 7px);
+      pointer-events:none;
+    }
+    .card-photo::after {
+      content:''; position:absolute; inset:0; z-index:2;
+      background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,.06) 1px, rgba(0,0,0,.06) 2px);
+      pointer-events:none;
+    }
+    /* Gradiente en la base de la foto para mezclar con el cuerpo */
+    .card-photo-gradient {
+      position:absolute; bottom:0; left:0; right:0; height:70px; z-index:3; pointer-events:none;
+      background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--cc, #050210) 30%, #050210));
+    }
+    /* Contenedor del avatar/foto */
+    .card-photo-inner {
+      position:absolute; inset:0; z-index:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .card-photo-inner img.avatar-photo {
+      width:100%; height:100%; object-fit:cover; object-position:top center;
+      filter: contrast(1.05) saturate(1.3) brightness(.97);
+    }
+    .card-photo-inner canvas { display:block; }
+    /* Nombre gigante flotando de fondo */
+    .card-watermark {
+      position:absolute; bottom:-14px; left:-2px; z-index:1;
+      font-size:56px; color:var(--cc, white); opacity:.06;
+      white-space:nowrap; pointer-events:none; line-height:1;
+      text-transform:uppercase;
+    }
+    /* Badges sobre la foto */
+    .card-photo-overlay {
+      position:absolute; top:10px; left:10px; right:10px;
+      display:flex; justify-content:space-between; align-items:flex-start;
+      z-index:5; pointer-events:none;
+    }
+    .card-count {
+      font-size:7px; color:#fff;
+      background:rgba(0,0,0,.75);
+      border:2px solid rgba(255,255,255,.35);
+      padding:3px 9px; letter-spacing:1px;
+      box-shadow: 2px 2px 0 rgba(0,0,0,.6);
+    }
+    .card-count.zero { opacity:.4; }
 
     /* ─── BRAND TAGS ─────────────────────────────────────────────── */
-    .brand-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:5px; }
+    .brand-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
     .brand-tag {
-      font-size:4px; padding:2px 6px; border:2px solid;
+      font-size:4px; padding:2px 7px; border:2px solid;
       color:var(--gold); border-color:rgba(255,229,0,.5);
       background:rgba(255,229,0,.08); letter-spacing:.5px;
-      box-shadow: 2px 2px 0 rgba(255,229,0,.2);
+      box-shadow: 2px 2px 0 rgba(120,90,0,.5);
       white-space:nowrap;
     }
 
-    /* Avatar — DDR portrait hero */
-    .avatar { width:76px; height:106px; flex-shrink:0; border:3px solid var(--border); position:relative; overflow:hidden; background:#0a0816; display:flex; align-items:center; justify-content:center; box-shadow: 3px 3px 0 rgba(0,0,0,.6); }
-    .avatar canvas { display:block; }
-    .avatar::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,.1) 1px, rgba(0,0,0,.1) 2px); pointer-events:none; z-index:2; }
-    .avatar img.avatar-photo { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; filter:contrast(1.05) saturate(1.3) brightness(.97); }
-    .avatar-level { position:absolute; bottom:-1px; left:0; right:0; font-size:4.5px; color:var(--gold); background:rgba(0,0,0,.85); border-top:1px solid var(--gold); padding:2px 4px; white-space:nowrap; z-index:3; text-align:center; text-shadow:0 0 6px var(--gold); letter-spacing:1px; }
+    /* Cuerpo de la card — info debajo de la foto */
+    .card-body { padding:12px 14px 0; flex:1; display:flex; flex-direction:column; cursor:pointer; }
+    .card-body:hover .card-hero-name { text-shadow: 3px 3px 0 rgba(0,0,0,.9), 0 0 28px color-mix(in srgb, var(--cc) 90%, transparent); }
 
-    .head-info { flex:1; min-width:0; padding-top:2px; }
-    .designer-name {
-      font-size:12px; color:var(--text); margin-bottom:5px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      text-shadow: 2px 2px 0 rgba(0,0,0,.8), 0 0 16px color-mix(in srgb, var(--cc, white) 70%, transparent);
-      line-height: 1.2;
+    /* NOMBRE — el elemento más importante */
+    .card-hero-name {
+      font-size: 16px; color: #fff; line-height: 1.1; margin-bottom: 5px;
+      white-space: nowrap; overflow:hidden; text-overflow: ellipsis;
+      text-shadow: 3px 3px 0 rgba(0,0,0,.9),
+                   0 0 20px color-mix(in srgb, var(--cc, white) 80%, transparent);
+      transition: text-shadow .15s;
     }
-    .designer-role { font-size:5px; color:var(--dim); letter-spacing:1px; margin-bottom:7px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .card-hero-sub {
+      font-size: 4.5px; color: var(--dim); letter-spacing: 1.5px;
+      margin-bottom: 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    /* Legacy alias */
+    .designer-name { font-size:16px; }
+    .designer-role { font-size:4.5px; color:var(--dim); }
 
     .bars { display:flex; flex-direction:column; gap:5px; }
     .bar-row { display:flex; align-items:center; gap:5px; }
@@ -562,14 +676,41 @@
 </head>
 <body>
 
-<div id="loading">
+<!-- ═══ MENÚ PRINCIPAL ═══════════════════════════════════════════════════ -->
+<div id="main-menu">
+  <div class="mmenu-eyebrow">EL JOINT CREATIVO · SISTEMA INTERNO</div>
+  <div class="mmenu-logo">PIXEL <span>TRAFFIC</span></div>
+  <div class="mmenu-studio">DESIGN OPS · v0.4</div>
+  <div class="mmenu-tiles">
+    <div class="mmenu-tile mmenu-t-dash" onclick="launchApp('dashboard')">
+      <div class="mmenu-tile-icon">📊</div>
+      <div class="mmenu-tile-name">DASHBOARD</div>
+      <div class="mmenu-tile-sub">EQUIPO ACTIVO</div>
+    </div>
+    <div class="mmenu-tile mmenu-t-met" onclick="launchApp('metrics')">
+      <div class="mmenu-tile-icon">📈</div>
+      <div class="mmenu-tile-name">MÉTRICAS</div>
+      <div class="mmenu-tile-sub">ANALÍTICA</div>
+    </div>
+    <div class="mmenu-tile mmenu-t-set" onclick="launchApp('settings')">
+      <div class="mmenu-tile-icon">⚙</div>
+      <div class="mmenu-tile-name">SETTINGS</div>
+      <div class="mmenu-tile-sub">CONFIGURAR</div>
+    </div>
+  </div>
+  <button class="mmenu-start" onclick="launchApp('dashboard')">▶ INICIAR</button>
+  <div class="mmenu-version">PIXEL TRAFFIC OS · EL JOINT CREATIVO © 2026</div>
+</div>
+
+<!-- ═══ LOADING (aparece solo al cargar datos) ═══════════════════════════ -->
+<div id="loading" style="display:none">
   <div class="boot-frame">
     <div class="load-eyebrow">EL JOINT CREATIVO · SISTEMA INTERNO</div>
     <div class="load-title">PIXEL <span>TRAFFIC</span></div>
     <div class="load-studio">DESIGN OPS DASHBOARD</div>
     <div class="load-divider"></div>
     <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
-    <div class="load-msg" id="load-msg-text">INICIALIZANDO...</div>
+    <div class="load-msg" id="load-msg-text">CARGANDO DATOS...</div>
     <div class="load-version">v0.4 · PIXEL TRAFFIC OS</div>
   </div>
 </div>
@@ -1307,28 +1448,34 @@ function renderCard(designer, idx, visibleTasks) {
     : tasks.slice(0,VISIBLE).map(t=>taskHtml(t,color,searchQuery)).join('')
       + (more>0?`<button class="show-more" onclick="expandCard(${idx}, event)">▼ +${more} TAREAS MÁS</button>`:'');
 
-  return `<div class="card" id="card-${idx}" style="--cc:${color};animation-delay:${idx * 45}ms">
-    <div class="card-top-bar" style="background:linear-gradient(90deg,${color},${color}99,${color})"></div>
-    <div class="card-head" onclick="openDesigner(${idx}, event)">
-      <div class="avatar" style="border-color:${color}44">
-        <canvas id="cv-${idx}"></canvas>
-        <div class="avatar-level ${nClass}" style="border-color:currentColor;font-size:4px;padding:2px 4px;">${levelLabel}</div>
+  return `<div class="card" id="card-${idx}" style="--cc:${color};animation-delay:${idx * 50}ms">
+
+    <!-- FOTO / AVATAR — parte superior full-width -->
+    <div class="card-photo" onclick="openDesigner(${idx}, event)">
+      <div id="cv-${idx}" class="card-photo-inner"></div>
+      <div class="card-watermark">${firstName}</div>
+      <div class="card-photo-gradient"></div>
+      <div class="card-photo-overlay">
+        <span class="card-count${active_count===0?' zero':''}">⚡ ${active_count}</span>
+        <span class="status-badge ${bclass}">${badge}</span>
       </div>
-      <div class="head-info">
-        <div class="designer-name">${firstName}</div>
-        <div class="designer-role">${(designer.title||'DISEÑADOR').toUpperCase()}</div>
-        ${brandTagsHtml(brands)}
-        <div class="bars" style="margin-top:4px;">
-          <div class="bar-row"><span class="bar-icon">⚡</span><div class="bar-track"><div class="bar-fill bar-active" style="width:${hpPct}%"></div></div><span class="bar-num" style="color:var(--red)">${active_count}</span></div>
-        </div>
-      </div>
-      <div class="status-badge ${bclass}">${badge}</div>
-      <div class="card-head-hint">VER PERFIL ▶</div>
     </div>
+
+    <!-- INFO — debajo de la foto -->
+    <div class="card-body" onclick="openDesigner(${idx}, event)">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;">
+        <div class="card-hero-name">${firstName}</div>
+        <span class="nivel-badge ${nClass}" style="flex-shrink:0">${levelLabel}</span>
+      </div>
+      <div class="card-hero-sub">${(designer.title||'DISEÑADOR').toUpperCase()}</div>
+      ${brandTagsHtml(brands)}
+    </div>
+
     ${skillStripHtml(skills, name)}
+
     <div class="task-list">
       <div class="task-header">
-        ${visibleTasks ? `RESULTADOS <span>${tasks.length}</span> <span style="color:var(--dim);font-size:4px;">DE ${active_count} ACTIVAS</span>` : `TAREAS ACTIVAS <span>${active_count}</span>`}
+        ${visibleTasks ? `RESULTADOS <span>${tasks.length}</span>` : `TAREAS ACTIVAS <span>${active_count}</span>`}
       </div>
       <div id="tl-${idx}">${tasksInner}</div>
     </div>
@@ -1492,7 +1639,7 @@ function renderGrid() {
 
   filtered.forEach(d => {
     const i = allDesigners.indexOf(d);
-    const av = document.getElementById(`cv-${i}`)?.parentElement;
+    const av = document.getElementById(`cv-${i}`);
     if (av) loadPhotoAvatar(av, d.color, nickname(d.name), i*7+1, false);
   });
 
@@ -1900,7 +2047,30 @@ function renderDonut(estados) {
     </div>`).join('');
 }
 
-loadData();
+// ─── MENÚ PRINCIPAL ──────────────────────────────────────────────────────
+let _targetSection = 'dashboard';
+
+function launchApp(section = 'dashboard') {
+  _targetSection = section;
+  const menu = document.getElementById('main-menu');
+  const loading = document.getElementById('loading');
+  menu.style.transition = 'opacity .35s ease';
+  menu.style.opacity = '0';
+  setTimeout(() => {
+    menu.style.display = 'none';
+    loading.style.display = 'flex';
+    loading.style.opacity = '1';
+    loadData();
+    // After load, navigate to the chosen section
+    if (section !== 'dashboard') {
+      const orig = window._afterLoad;
+      window._afterLoad = () => { if(orig) orig(); switchView(section); };
+    }
+  }, 380);
+}
+
+// On DOMContentLoaded the menu shows; data loads only when user clicks
+// loadData() is NOT called automatically — it runs from launchApp()
 </script>
 </body>
 </html>
