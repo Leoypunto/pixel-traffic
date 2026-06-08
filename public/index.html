@@ -646,6 +646,33 @@
 <footer>INSERT COIN TO CONTINUE · EL JOINT CREATIVO © 2026 · PIXEL TRAFFIC v0.4</footer>
 
 <!-- ─── TASK MODAL ─────────────────────────────────────────────────────── -->
+<!-- ─── DESIGNER MODAL ────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="designer-modal" onclick="closeDesignerModal(event)">
+  <div class="dmodal-box" id="designer-modal-box">
+    <div class="dmodal-head">
+      <canvas class="dmodal-avatar" id="dm-avatar"></canvas>
+      <div class="dmodal-info">
+        <div class="dmodal-name" id="dm-name">—</div>
+        <div class="dmodal-sub" id="dm-role">—</div>
+        <div class="dmodal-stats">
+          <div class="dmodal-stat">⚡ ACTIVAS <strong id="dm-active">0</strong></div>
+          <div class="dmodal-stat">★ COMPLETADAS <strong id="dm-done">0</strong></div>
+          <div class="dmodal-stat">≡ TOTAL <strong id="dm-total">0</strong></div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeDesignerModal()" style="align-self:flex-start;">✕</button>
+    </div>
+    <div class="dmodal-tabs">
+      <button class="dmodal-tab active" onclick="switchTab('active',this)">⚡ ACTIVAS</button>
+      <button class="dmodal-tab" onclick="switchTab('all',this)">≡ TODAS</button>
+      <button class="dmodal-tab" onclick="switchTab('done',this)">★ COMPLETADAS</button>
+    </div>
+    <div class="dmodal-body" id="dm-tasks">
+      <div class="dmodal-empty">CARGANDO...</div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="task-modal" onclick="closeTaskModal(event)">
   <div class="modal-box" id="task-modal-box">
     <div class="modal-top-bar" id="task-modal-bar"></div>
@@ -709,33 +736,6 @@
       <div style="display:flex; gap:10px; justify-content:flex-end;">
         <a class="modal-bc-btn" id="tm-bc-btn" href="#" target="_blank">⬡ ABRIR EN BASECAMP</a>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── DESIGNER MODAL ────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="designer-modal" onclick="closeDesignerModal(event)">
-  <div class="dmodal-box" id="designer-modal-box">
-    <div class="dmodal-head">
-      <canvas class="dmodal-avatar" id="dm-avatar"></canvas>
-      <div class="dmodal-info">
-        <div class="dmodal-name" id="dm-name">—</div>
-        <div class="dmodal-sub" id="dm-role">—</div>
-        <div class="dmodal-stats">
-          <div class="dmodal-stat">⚡ ACTIVAS <strong id="dm-active">0</strong></div>
-          <div class="dmodal-stat">★ COMPLETADAS <strong id="dm-done">0</strong></div>
-          <div class="dmodal-stat">≡ TOTAL <strong id="dm-total">0</strong></div>
-        </div>
-      </div>
-      <button class="modal-close" onclick="closeDesignerModal()" style="align-self:flex-start;">✕</button>
-    </div>
-    <div class="dmodal-tabs">
-      <button class="dmodal-tab active" onclick="switchTab('active',this)">⚡ ACTIVAS</button>
-      <button class="dmodal-tab" onclick="switchTab('all',this)">≡ TODAS</button>
-      <button class="dmodal-tab" onclick="switchTab('done',this)">★ COMPLETADAS</button>
-    </div>
-    <div class="dmodal-body" id="dm-tasks">
-      <div class="dmodal-empty">CARGANDO...</div>
     </div>
   </div>
 </div>
