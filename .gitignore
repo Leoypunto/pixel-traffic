@@ -1,8 +1,20 @@
+# Secrets — NUNCA subir
 .env
+
+# Dependencies
 node_modules/
+
+# Database — no subir al repo (Railway usa volumen persistente)
 traffic.db
-debug-*.png
-debug-*.json
 *.db-shm
 *.db-wal
+
+# Debug artifacts
+debug-*.png
+debug-*.json
 debug-row.html
+debug-structure.json
+debug-tasks*.json
+
+# OS
+.DS_Store

@@ -1,12 +1,41 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path');
-const cron = require('node-cron');
+const path    = require('path');
+const crypto  = require('crypto');
+const cron    = require('node-cron');
 const { db, queries } = require('./db');
 const { scrape } = require('./scraper');
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3333;
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+const ACCESS_KEY   = process.env.ACCESS_KEY || 'pixeltraffic2026';
+// TOKEN_SECRET: fijo si se define en .env, aleatorio si no (reinicios invalidan tokens)
+const TOKEN_SECRET = process.env.TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
+const VALID_TOKEN  = crypto.createHmac('sha256', TOKEN_SECRET).update(ACCESS_KEY).digest('hex');
+
+function requireAuth(req, res, next) {
+  const token = req.headers['x-token'] || req.query._t;
+  if (token === VALID_TOKEN) return next();
+  res.status(401).json({ error: 'Unauthorized' });
+}
+
+// Login endpoint (público, sin auth)
+app.post('/api/auth', express.json(), (req, res) => {
+  const { password } = req.body || {};
+  if (password === ACCESS_KEY) {
+    res.json({ ok: true, token: VALID_TOKEN });
+  } else {
+    res.status(401).json({ ok: false, error: 'Contraseña incorrecta' });
+  }
+});
+
+// Todas las rutas /api/* requieren token, excepto /api/auth
+app.use('/api', (req, res, next) => {
+  if (req.path === '/auth' && req.method === 'POST') return next();
+  requireAuth(req, res, next);
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
@@ -217,6 +246,137 @@ app.get('/api/metrics', (req, res) => {
     .slice(0, 10);
 
   res.json({ ranking, weeks, estados, clientes });
+});
+
+// ─── API: Heatmap ──────────────────────────────────────────────────────
+app.get('/api/metrics/heatmap', (req, res) => {
+  const allTasks = db.prepare('SELECT * FROM tasks').all();
+  const designers = db.prepare('SELECT * FROM designers WHERE active = 1').all();
+
+  // Últimos 14 días con datos
+  const today = new Date();
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0,10));
+  }
+
+  const matrix = {};
+  designers.forEach(d => {
+    matrix[d.name] = {};
+    days.forEach(day => {
+      matrix[d.name][day] = allTasks.filter(t => {
+        if (t.designer_name !== d.name) return false;
+        if (t.status === 'completed' || t.status === 'archived') return false;
+        const start = t.order_date || '';
+        let extra = {};
+        try { extra = JSON.parse(t.raw_html || '{}'); } catch(e) {}
+        const end = extra.fecha_fin || '';
+        if (!start && !end) return true;
+        if (start && end)  return start <= day && day <= end;
+        if (start && !end) return start <= day;
+        return false;
+      }).length;
+    });
+  });
+
+  res.json({ designers: designers.map(d => ({ name: d.name, color: d.color })), days, matrix });
+});
+
+// ─── API: Vencidas ────────────────────────────────────────────────────
+app.get('/api/metrics/vencidas', (req, res) => {
+  const today = todayStr();
+  const allTasks = db.prepare('SELECT * FROM tasks WHERE status != ? AND status != ?').all('completed','archived');
+
+  const vencidas = allTasks
+    .map(t => {
+      let extra = {};
+      try { extra = JSON.parse(t.raw_html || '{}'); } catch(e) {}
+      const fin = extra.fecha_fin || '';
+      if (!fin || fin >= today) return null;
+      const daysOver = Math.round((new Date(today) - new Date(fin)) / 86400000);
+      return { designer_name: t.designer_name, title: t.title, fecha_fin: fin, days_overdue: daysOver, cliente: extra.cliente || '' };
+    })
+    .filter(Boolean)
+    .sort((a,b) => b.days_overdue - a.days_overdue);
+
+  res.json({ count: vencidas.length, tasks: vencidas.slice(0, 20) });
+});
+
+// ─── API: Throughput ──────────────────────────────────────────────────
+app.get('/api/metrics/throughput', (req, res) => {
+  const completed = db.prepare("SELECT * FROM tasks WHERE status = 'completed'").all();
+  const designers = db.prepare('SELECT * FROM designers WHERE active = 1').all();
+
+  // Semanas (últimas 6)
+  const now = new Date();
+  const weekly = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i * 7);
+    const mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay()+6)%7)); mon.setHours(0,0,0,0);
+    const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+    const wStr = mon.toISOString().slice(0,10);
+    const wEnd = sun.toISOString().slice(0,10);
+    const label = `${String(mon.getDate()).padStart(2,'0')}/${String(mon.getMonth()+1).padStart(2,'0')}`;
+    const count = completed.filter(t => t.order_date >= wStr && t.order_date <= wEnd).length;
+    weekly.push({ week: label, completed: count });
+  }
+
+  // Avg por semana — usando rango de fechas de las tareas (no días de scraper)
+  // El rango cubre desde la tarea completada más antigua hasta hoy
+  const dateRange = db.prepare("SELECT MIN(order_date) as min_d, MAX(order_date) as max_d FROM tasks WHERE status='completed' AND order_date LIKE '2026-%'").get();
+  const minDate = dateRange?.min_d ? new Date(dateRange.min_d) : new Date();
+  const weeksRange = Math.max(1, Math.round((Date.now() - minDate) / (7 * 86400000)));
+  const avgPerWeek = +(completed.length / weeksRange).toFixed(1);
+  // También calcular avg/día útil de esta semana vs la anterior
+  const prevWeekStart = new Date(now); prevWeekStart.setDate(prevWeekStart.getDate() - ((prevWeekStart.getDay()+6)%7) - 7); prevWeekStart.setHours(0,0,0,0);
+  const prevWeekEnd   = new Date(prevWeekStart); prevWeekEnd.setDate(prevWeekStart.getDate()+6);
+  const prevWeekStr   = prevWeekStart.toISOString().slice(0,10);
+  const prevWeekEndStr= prevWeekEnd.toISOString().slice(0,10);
+  const prevWeekCount = completed.filter(t => t.order_date >= prevWeekStr && t.order_date <= prevWeekEndStr).length;
+
+  // Scoreboard esta semana
+  const mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay()+6)%7)); mon.setHours(0,0,0,0);
+  const weekStart = mon.toISOString().slice(0,10);
+  const scores = designers.map(d => ({
+    name: d.name,
+    count: completed.filter(t => t.designer_name === d.name && t.order_date >= weekStart).length
+  })).filter(s => s.count > 0).sort((a,b) => b.count - a.count);
+
+  res.json({ weekly, avg_per_week: avgPerWeek, avg_per_day: +(avgPerWeek/7).toFixed(1), prev_week: prevWeekCount, best_designer: scores[0] || null, scoreboard: scores });
+});
+
+// ─── API: Rebotes ──────────────────────────────────────────────────────
+app.get('/api/metrics/rebotes', (req, res) => {
+  const allTasks = db.prepare('SELECT * FROM tasks WHERE status != ? AND status != ?').all('completed','archived');
+
+  const reboteEstados = ['cambios en diseño','cambios en creatividad','cambios en edición'];
+  const clienteMap = {};
+  const totalMap = {};
+
+  allTasks.forEach(t => {
+    let extra = {};
+    try { extra = JSON.parse(t.raw_html || '{}'); } catch(e) {}
+    const cliente = extra.cliente || '';
+    const estado = (extra.estado || '').toLowerCase();
+    if (!cliente) return;
+    totalMap[cliente] = (totalMap[cliente] || 0) + 1;
+    if (reboteEstados.includes(estado)) clienteMap[cliente] = (clienteMap[cliente] || 0) + 1;
+  });
+
+  const result = Object.entries(clienteMap)
+    .map(([cliente, cambios]) => ({
+      cliente,
+      cambios,
+      total: totalMap[cliente] || 0,
+      pct: Math.round((cambios / (totalMap[cliente] || 1)) * 100)
+    }))
+    .sort((a,b) => b.cambios - a.cambios)
+    .slice(0,8);
+
+  res.json(result);
 });
 
 // ─── API: Update designer skills ─────────────────────────────────────────────

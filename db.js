@@ -1,7 +1,11 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'traffic.db');
+// DB_PATH: configurable vía env para Railway volumes (/data/traffic.db)
+// Crea el directorio si no existe
+const DB_DIR  = process.env.DB_DIR ? path.resolve(process.env.DB_DIR) : __dirname;
+const DB_PATH = path.join(DB_DIR, 'traffic.db');
+require('fs').mkdirSync(DB_DIR, { recursive: true });
 const db = new Database(DB_PATH);
 
 // Enable WAL for better performance
@@ -221,6 +225,13 @@ const queries = {
   insertTask: db.prepare(`
     INSERT OR REPLACE INTO tasks (external_id, designer_name, title, status, created_by, assigned_to, order_date, basecamp_url, raw_html, scraped_at)
     VALUES (@external_id, @designer_name, @title, @status, @created_by, @assigned_to, @order_date, @basecamp_url, @raw_html, @scraped_at)
+  `),
+
+  // Elimina filas duplicadas (mismo designer+title+order_date) conservando la más reciente
+  deduplicateTasks: db.prepare(`
+    DELETE FROM tasks WHERE id NOT IN (
+      SELECT MAX(id) FROM tasks GROUP BY designer_name, title, order_date
+    )
   `),
 
   logSync: db.prepare(`

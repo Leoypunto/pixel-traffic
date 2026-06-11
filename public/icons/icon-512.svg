@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d0528"/>
+      <stop offset="100%" stop-color="#04061a"/>
+    </linearGradient>
+  </defs>
+  <!-- Fondo -->
+  <rect width="512" height="512" fill="url(#bg)" rx="61.44"/>
+  <!-- Grid lines -->
+  <g opacity="0.06">
+    <line x1="0" y1="0" x2="0" y2="512" stroke="#5028ff" stroke-width="1"/><line x1="64" y1="0" x2="64" y2="512" stroke="#5028ff" stroke-width="1"/><line x1="128" y1="0" x2="128" y2="512" stroke="#5028ff" stroke-width="1"/><line x1="192" y1="0" x2="192" y2="512" stroke="#5028ff" stroke-width="1"/><line x1="256" y1="0" x2="256" y2="512" stroke="#5028ff" stroke-width="1"/><line x1="320" y1="0" x2="320" y2="512" stroke="#5028ff" stroke-width="1"/><line x1="384" y1="0" x2="384" y2="512" stroke="#5028ff" stroke-width="1"/><line x1="448" y1="0" x2="448" y2="512" stroke="#5028ff" stroke-width="1"/>
+    <line x1="0" y1="0" x2="512" y2="0" stroke="#5028ff" stroke-width="1"/><line x1="0" y1="64" x2="512" y2="64" stroke="#5028ff" stroke-width="1"/><line x1="0" y1="128" x2="512" y2="128" stroke="#5028ff" stroke-width="1"/><line x1="0" y1="192" x2="512" y2="192" stroke="#5028ff" stroke-width="1"/><line x1="0" y1="256" x2="512" y2="256" stroke="#5028ff" stroke-width="1"/><line x1="0" y1="320" x2="512" y2="320" stroke="#5028ff" stroke-width="1"/><line x1="0" y1="384" x2="512" y2="384" stroke="#5028ff" stroke-width="1"/><line x1="0" y1="448" x2="512" y2="448" stroke="#5028ff" stroke-width="1"/>
+  </g>
+  <!-- Pixel joystick -->
+  <!-- Stick -->
+  <rect x="225.28" y="92.16" width="61.44" height="194.56" fill="#ffcc00" rx="10.24"/>
+  <!-- Ball -->
+  <circle cx="256" cy="92.16" r="66.56" fill="#00aaff"/>
+  <circle cx="230.4" cy="71.68" r="20.48" fill="rgba(255,255,255,0.6)"/>
+  <!-- Base -->
+  <rect x="112.64" y="317.44" width="286.72" height="92.16" fill="#ffcc00" rx="15.36"/>
+  <rect x="138.24" y="337.92" width="235.52" height="51.2" fill="rgba(180,130,0,0.8)" rx="10.24"/>
+  <!-- Buttons -->
+  <circle cx="163.84" cy="363.52" r="25.6" fill="#ff1144"/>
+  <circle cx="256"  cy="363.52" r="25.6" fill="#00ff55"/>
+  <circle cx="348.16" cy="363.52" r="25.6" fill="#dd00ff"/>
+  <!-- Glow -->
+  <circle cx="256" cy="92.16" r="81.92" fill="rgba(0,170,255,0.15)"/>
+  <!-- PT text -->
+  <text x="256" y="281.6" font-family="monospace" font-size="46.08" 
+    fill="#ffcc00" text-anchor="middle" font-weight="bold" letter-spacing="5.12">PIXEL</text>
+</svg>

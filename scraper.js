@@ -1,5 +1,4 @@
 require('dotenv').config();
-const puppeteer = require('puppeteer');
 const { queries } = require('./db');
 const fs = require('fs');
 
@@ -145,9 +144,10 @@ async function extractTasks(page) {
         .map(a => a.href)
         .filter(href => href.includes('basecamp'));
 
+      // Usar el string completo para evitar colisiones por truncado prematuro
       const extId = btoa(encodeURIComponent(
         [cliente, proyecto || asignadoRaw, fechaInicio].join('|')
-      )).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+      )).replace(/[^a-zA-Z0-9]/g, '');
 
       tasks.push({
         external_id:   extId,
@@ -175,11 +175,20 @@ async function scrape() {
   const now = new Date().toISOString();
   console.log(`\n[${now}] 🎮 Iniciando scrape de Pixel Traffic...`);
 
+  // Dynamic import para puppeteer ESM (compatible con CJS server)
+  const { default: puppeteer } = await import('puppeteer');
+
   let browser;
   try {
     browser = await puppeteer.launch({
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',   // evita crashes en Docker/Linux con RAM limitada
+        '--disable-gpu',             // no necesario en servidor headless
+        '--single-process',          // más estable en entornos con pocos recursos
+      ],
     });
 
     const page = await browser.newPage();
@@ -192,10 +201,11 @@ async function scrape() {
     const tasks = await extractTasks(page);
     console.log(`  ✓ ${tasks.length} tareas extraídas`);
 
-    // Debug: save first run
+    // Debug: guardar todas las tareas para inspección
     if (tasks.length > 0) {
       fs.writeFileSync('debug-tasks.json', JSON.stringify(tasks.slice(0, 5), null, 2));
-      console.log('  → Muestra guardada en debug-tasks.json');
+      fs.writeFileSync('debug-tasks-all.json', JSON.stringify(tasks, null, 2));
+      console.log('  → Muestra guardada en debug-tasks.json + debug-tasks-all.json');
     }
 
     // ─── Save to SQLite ───────────────────────────────────────────────────────
@@ -226,7 +236,7 @@ async function scrape() {
         const status = Object.entries(statusMap).find(([k]) => statusKey.includes(k))?.[1] || 'active';
 
         queries.insertTask.run({
-          external_id:   `${task.external_id}_${btoa(designerName).substring(0, 8)}`,
+          external_id:   `${task.external_id}_${btoa(designerName).replace(/[^a-zA-Z0-9]/g, '')}`,
           designer_name: designerName,
           title:         task.proyecto || task.cliente,
           status,
@@ -249,6 +259,10 @@ async function scrape() {
     }
 
     console.log(`  ✓ ${saved} registros guardados en SQLite`);
+
+    // Limpiar duplicados (mismo designer+title+order_date, distinto external_id)
+    const dedup = queries.deduplicateTasks.run();
+    if (dedup.changes > 0) console.log(`  🧹 ${dedup.changes} duplicados eliminados`);
 
     queries.logSync.run({
       synced_at:   now,
