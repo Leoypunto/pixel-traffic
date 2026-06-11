@@ -1,7 +1,7 @@
 // Pixel Traffic — Service Worker v1
 // Estrategia: cache-first para assets estáticos, network-first para API
 
-const CACHE_NAME = 'pixel-traffic-v1';
+const CACHE_NAME = 'pixel-traffic-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
