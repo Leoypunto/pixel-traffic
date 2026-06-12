@@ -1,6 +1,15 @@
 require('dotenv').config();
 const { queries } = require('./db');
 const fs = require('fs');
+const { execSync } = require('child_process');
+
+// Detectar Chromium del sistema (Railway/Docker) o usar el de Puppeteer
+function findChromium() {
+  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
+  try { return execSync('which chromium || which chromium-browser || which google-chrome', {encoding:'utf8'}).trim().split('\n')[0]; }
+  catch { return undefined; }
+}
 
 const URL      = process.env.DASHBOARD_URL;
 const EMAIL    = process.env.DASHBOARD_EMAIL;
@@ -182,12 +191,13 @@ async function scrape() {
   try {
     browser = await puppeteer.launch({
       headless: 'new',
+      executablePath: findChromium(),
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',   // evita crashes en Docker/Linux con RAM limitada
-        '--disable-gpu',             // no necesario en servidor headless
-        '--single-process',          // más estable en entornos con pocos recursos
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--single-process',
       ],
     });
 

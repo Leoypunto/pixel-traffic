@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs_20", "chromium", "nss", "freetype", "harfbuzz", "ca-certificates", "ttf-opensans"]
 
 [phases.install]
-cmds = ["npm ci --omit=dev"]
+cmds = ["PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1 npm ci --omit=dev"]
 
 [start]
 cmd = "node server.js"
