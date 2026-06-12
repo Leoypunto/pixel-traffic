@@ -441,13 +441,12 @@
       transition:background .4s ease;
     }
     .cs-hero-img-wrap {
-      flex:1; display:flex; align-items:flex-end; justify-content:center;
-      position:relative; overflow:hidden; padding:0 12px;
+      flex:1; position:relative; overflow:hidden; min-height:0;
     }
     .cs-hero-img {
-      width:100%; max-width:240px;
-      object-fit:contain; object-position:center bottom;
-      filter:drop-shadow(0 0 30px var(--cs-cc,rgba(255,204,0,.5)));
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; object-position:center top;
+      filter:drop-shadow(0 0 40px var(--cs-cc,rgba(255,204,0,.6)));
       transition:filter .3s ease;
       animation: csHeroSlide .35s ease-out;
     }
@@ -2550,7 +2549,7 @@
 
 <main><div class="grid" id="grid"></div></main>
 <!-- Vista personajes: char-select persistente dentro del dashboard -->
-<div id="personajes-view" style="display:none; flex-direction:column; min-height:calc(100vh - 130px); position:relative;"></div>
+<div id="personajes-view" style="display:none; flex-direction:column; height:calc(100vh - 130px); position:relative;"></div>
 </div><!-- /dashboard-view -->
 <footer>INSERT COIN TO CONTINUE · EL JOINT CREATIVO © 2026 · PIXEL TRAFFIC v0.4</footer>
 
