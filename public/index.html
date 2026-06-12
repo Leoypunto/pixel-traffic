@@ -361,6 +361,276 @@
     .mmenu-hiscore { font-size:5px; color:var(--dim); letter-spacing:3px; }
     .mmenu-dot-sep { color:var(--border); font-size:8px; }
 
+    /* ═══ CHARACTER SELECT SCREEN ═══════════════════════════════════════════ */
+    @keyframes csAppear { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+    @keyframes csCursorPulse { 0%,100%{box-shadow:0 0 0 3px var(--cs-cc,#ffcc00),0 0 22px var(--cs-cc,#ffcc00),inset 0 0 12px rgba(255,204,0,.15)} 50%{box-shadow:0 0 0 3px var(--cs-cc,#ffcc00),0 0 45px var(--cs-cc,#ffcc00),0 0 8px var(--cs-cc,#ffcc00),inset 0 0 24px rgba(255,204,0,.3)} }
+    @keyframes csHeroSlide { from{opacity:0;transform:translateX(-30px) scale(.95)} to{opacity:1;transform:translateX(0) scale(1)} }
+    @keyframes csTimerTick { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+    @keyframes csFlashRed { 0%,100%{color:#ff1144} 50%{color:#ff6688} }
+    @keyframes csNameAppear { from{opacity:0;letter-spacing:16px} to{opacity:1;letter-spacing:3px} }
+    @keyframes csVsFlash { 0%{opacity:0;transform:scale(2)} 30%{opacity:1;transform:scale(1.1)} 100%{opacity:1;transform:scale(1)} }
+    @keyframes csReadyBlink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.97)} }
+    @keyframes csScanline { 0%{background-position:0 0} 100%{background-position:0 100px} }
+
+    #char-select {
+      position:fixed; inset:0; z-index:350;
+      display:none;
+      background:#050312;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(100,0,200,.5) 0%, transparent 70%),
+        radial-gradient(circle at 0% 100%, rgba(0,60,180,.3) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(180,0,100,.25) 0%, transparent 50%);
+      font-family: 'Press Start 2P', monospace;
+      animation: csAppear .35s ease-out;
+      overflow:hidden;
+    }
+    /* CRT scanlines overlay */
+    #char-select::before {
+      content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+      background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px);
+      animation: csScanline 2s linear infinite;
+    }
+    /* Noise vignette */
+    #char-select::after {
+      content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+      background:radial-gradient(ellipse 100% 100% at 50% 50%, transparent 60%, rgba(0,0,0,.65) 100%);
+    }
+
+    .cs-inner { position:relative; z-index:2; width:100%; height:100%; display:flex; flex-direction:column; }
+
+    /* ─── TOP BAR ─── */
+    .cs-topbar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 28px 8px;
+      border-bottom:2px solid rgba(255,204,0,.25);
+      background:rgba(0,0,0,.4);
+      flex-shrink:0;
+    }
+    .cs-title {
+      font-size:clamp(10px,1.4vw,14px); letter-spacing:4px;
+      color:#fff; text-shadow:0 0 20px rgba(255,255,255,.4);
+    }
+    .cs-title em { color:var(--gold); font-style:normal; }
+    .cs-timer-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .cs-timer-label { font-size:5px; color:var(--dim); letter-spacing:3px; }
+    .cs-timer {
+      font-size:clamp(22px,3vw,36px); color:var(--gold);
+      text-shadow:0 0 20px rgba(255,204,0,.8);
+      animation: csTimerTick 1s steps(1) infinite;
+      min-width:2ch; text-align:center;
+    }
+    .cs-timer.urgent { color:#ff1144; text-shadow:0 0 20px rgba(255,17,68,.8); animation: csFlashRed .5s steps(1) infinite; }
+    .cs-credits { font-size:5px; color:var(--dim); letter-spacing:2px; text-align:right; line-height:1.8; }
+
+    /* ─── MAIN AREA ─── */
+    .cs-main {
+      flex:1; display:flex; gap:0; min-height:0;
+    }
+
+    /* ─── LEFT: character display ─── */
+    .cs-hero-panel {
+      width:clamp(200px,28vw,340px); flex-shrink:0;
+      display:flex; flex-direction:column;
+      border-right:2px solid rgba(255,204,0,.15);
+      background:rgba(0,0,0,.3);
+      position:relative; overflow:hidden;
+    }
+    .cs-hero-bg {
+      position:absolute; inset:0;
+      background:radial-gradient(ellipse 90% 90% at 50% 100%, var(--cs-cc,rgba(255,204,0,.15)) 0%, transparent 70%);
+      transition:background .4s ease;
+    }
+    .cs-hero-img-wrap {
+      flex:1; display:flex; align-items:flex-end; justify-content:center;
+      position:relative; overflow:hidden; padding:0 12px;
+    }
+    .cs-hero-img {
+      width:100%; max-width:240px;
+      object-fit:contain; object-position:center bottom;
+      filter:drop-shadow(0 0 30px var(--cs-cc,rgba(255,204,0,.5)));
+      transition:filter .3s ease;
+      animation: csHeroSlide .35s ease-out;
+    }
+    .cs-hero-img.admin-icon {
+      font-size:80px; text-align:center; padding:40px 0;
+      display:flex; align-items:center; justify-content:center;
+      filter:none;
+    }
+    .cs-hero-info {
+      padding:12px 14px 14px; flex-shrink:0;
+      border-top:1px solid rgba(255,255,255,.1);
+      background:rgba(0,0,0,.5);
+      position:relative; z-index:2;
+    }
+    .cs-hero-name {
+      font-family:'VT323',monospace; font-size:clamp(24px,3vw,38px);
+      color:var(--cs-cc,var(--gold));
+      text-shadow:0 0 20px var(--cs-cc,rgba(255,204,0,.6));
+      letter-spacing:3px;
+      animation: csNameAppear .25s ease-out;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .cs-hero-level {
+      font-size:6px; color:var(--gold); letter-spacing:2px; margin-top:4px;
+    }
+    .cs-hero-stars { margin-top:5px; font-size:10px; letter-spacing:2px; color:var(--gold); }
+    .cs-hero-press {
+      margin-top:10px; font-size:6px; color:var(--dim); letter-spacing:2px;
+      animation: csReadyBlink 1.2s ease-in-out infinite;
+    }
+    .cs-hero-press.ready { color:var(--green); animation: csReadyBlink .6s ease-in-out infinite; }
+
+    /* ─── CENTER: grid ─── */
+    .cs-grid-panel {
+      flex:1; display:flex; flex-direction:column; padding:16px 20px 12px;
+      min-width:0;
+    }
+    .cs-grid-header {
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+    }
+    .cs-grid-label { font-size:6px; color:var(--dim); letter-spacing:3px; }
+    .cs-grid-hint { font-size:5px; color:rgba(255,255,255,.3); letter-spacing:1px; }
+
+    .cs-grid {
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      grid-auto-rows:minmax(0,148px);
+      gap:6px;
+      overflow-y:auto;
+      flex:1; min-height:0;
+      padding-right:2px;
+      align-content:start;
+    }
+    .cs-grid::-webkit-scrollbar { width:3px; }
+    .cs-grid::-webkit-scrollbar-thumb { background:rgba(255,204,0,.35); border-radius:2px; }
+    @media (max-width:900px) { .cs-grid { grid-template-columns:repeat(4,1fr); } }
+
+    .cs-portrait {
+      border:2px solid rgba(255,255,255,.12);
+      border-radius:6px;
+      background:#0a0818;
+      position:relative; overflow:hidden; cursor:pointer;
+      transition:border-color .15s, transform .15s;
+    }
+    .cs-portrait:hover { border-color:rgba(255,255,255,.4); transform:scale(1.05); }
+    .cs-portrait.selected {
+      border-color:var(--cs-cc,var(--gold));
+      --cs-cc: var(--portrait-color, #ffcc00);
+      animation: csCursorPulse .9s ease-in-out infinite;
+      transform:scale(1.08);
+      z-index:2;
+    }
+    .cs-portrait img {
+      width:100%; height:100%;
+      object-fit:cover; object-position:center top;
+      pointer-events:none;
+    }
+    .cs-portrait-fallback {
+      width:100%; height:100%;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'VT323',monospace; font-size:clamp(18px,2.2vw,28px);
+      color:var(--portrait-color,#fff);
+      background:linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.6) 100%);
+    }
+    .cs-portrait-overlay {
+      position:absolute; bottom:0; left:0; right:0;
+      background:linear-gradient(transparent,rgba(0,0,0,.85));
+      padding:2px 4px 4px;
+    }
+    .cs-portrait-name {
+      font-family:'VT323',monospace; font-size:clamp(9px,1.1vw,13px);
+      color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      line-height:1.2;
+    }
+    .cs-portrait-lvl {
+      font-size:clamp(4px,.55vw,6px); color:rgba(255,255,255,.55);
+      letter-spacing:1px; margin-top:1px;
+    }
+    /* Admin tile */
+    .cs-portrait.cs-admin {
+      background:linear-gradient(135deg,#0d0828 0%,#1a0540 100%);
+      border-color:rgba(255,204,0,.3);
+    }
+    .cs-portrait.cs-admin .cs-portrait-fallback { font-size:clamp(22px,2.8vw,36px); }
+    /* Color bar top per portrait */
+    .cs-portrait::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background:var(--portrait-color,rgba(255,255,255,.2));
+      z-index:1;
+    }
+
+    /* ─── RIGHT: right panel (selected player info) ─── */
+    .cs-right-panel {
+      width:clamp(130px,16vw,200px); flex-shrink:0;
+      border-left:2px solid rgba(255,204,0,.15);
+      background:rgba(0,0,0,.3);
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; gap:14px; padding:20px 12px;
+    }
+    .cs-player-label {
+      font-size:clamp(6px,.8vw,8px); letter-spacing:3px; color:var(--gold);
+      text-align:center;
+    }
+    .cs-player-portrait {
+      width:80px; height:80px; border-radius:8px; overflow:hidden;
+      border:2px solid var(--cs-cc,var(--gold));
+      box-shadow:0 0 20px var(--cs-cc,rgba(255,204,0,.4));
+      transition:border-color .3s, box-shadow .3s;
+      background:#0a0818;
+    }
+    .cs-player-portrait img { width:100%; height:100%; object-fit:cover; object-position:center top; }
+    .cs-player-name {
+      font-family:'VT323',monospace;
+      font-size:clamp(14px,1.8vw,20px); color:var(--cs-cc,var(--gold));
+      text-align:center; letter-spacing:2px;
+    }
+    .cs-mode-badge {
+      font-size:5px; letter-spacing:2px;
+      padding:4px 8px; border-radius:4px;
+      background:rgba(255,204,0,.1); border:1px solid rgba(255,204,0,.3);
+      color:var(--gold); text-align:center;
+    }
+    .cs-mode-badge.admin-mode { background:rgba(170,0,255,.15); border-color:rgba(170,0,255,.4); color:#dd00ff; }
+    .cs-select-btn {
+      font-family:'Press Start 2P',monospace; font-size:clamp(5px,.7vw,7px);
+      padding:8px 12px; border-radius:6px; border:none; cursor:pointer;
+      background:var(--cs-cc,var(--gold));
+      color:#000; letter-spacing:1px;
+      animation: startPulse 1.5s ease-in-out infinite;
+      width:100%;
+    }
+
+    /* ─── BOTTOM BAR ─── */
+    .cs-bottombar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:8px 28px;
+      border-top:1px solid rgba(255,204,0,.15);
+      background:rgba(0,0,0,.4);
+      flex-shrink:0;
+    }
+    .cs-controls { display:flex; gap:16px; align-items:center; }
+    .cs-ctrl { font-size:5px; color:var(--dim); letter-spacing:1px; display:flex; align-items:center; gap:5px; }
+    .cs-ctrl span {
+      background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+      border-radius:3px; padding:2px 5px; color:#fff; font-size:6px;
+    }
+    .cs-back-btn {
+      font-family:'Press Start 2P',monospace; font-size:5px; letter-spacing:1px;
+      padding:6px 12px; background:transparent; border:1px solid rgba(255,255,255,.25);
+      color:var(--dim); border-radius:4px; cursor:pointer;
+    }
+    .cs-back-btn:hover { border-color:rgba(255,255,255,.5); color:#fff; }
+
+    /* Day theme overrides */
+    body.day-theme #char-select { background:#d8d4f0; }
+    body.day-theme .cs-hero-info { background:rgba(255,255,255,.8); }
+    body.day-theme .cs-hero-name { text-shadow:none; }
+    body.day-theme .cs-portrait { background:#e8e4ff; border-color:rgba(0,0,0,.15); }
+    body.day-theme .cs-hero-panel,
+    body.day-theme .cs-right-panel { background:rgba(255,255,255,.2); }
+    body.day-theme .cs-topbar,
+    body.day-theme .cs-bottombar { background:rgba(255,255,255,.4); }
+
     /* Boot / Menu Screen */
     #loading {
       position:fixed; inset:0; z-index:200;
@@ -1769,6 +2039,77 @@
   </div>
 </div>
 
+<!-- ═══ CHARACTER SELECT ══════════════════════════════════════════════════ -->
+<div id="char-select">
+  <div class="cs-inner">
+
+    <!-- Top bar -->
+    <div class="cs-topbar">
+      <div class="cs-title">EL JOINT · <em>PIXEL TRAFFIC</em> · DESIGN OPS</div>
+      <div class="cs-timer-wrap">
+        <div class="cs-timer-label">TIME</div>
+        <div class="cs-timer" id="cs-timer">99</div>
+      </div>
+      <div class="cs-credits">CHOOSE YOUR<br>FIGHTER</div>
+    </div>
+
+    <!-- Main area -->
+    <div class="cs-main">
+
+      <!-- Left: Hero display -->
+      <div class="cs-hero-panel" id="cs-hero-panel">
+        <div class="cs-hero-bg" id="cs-hero-bg"></div>
+        <div class="cs-hero-img-wrap" id="cs-hero-img-wrap">
+          <img class="cs-hero-img" id="cs-hero-img" src="" alt="" onerror="this.style.display='none';document.getElementById('cs-hero-fallback').style.display='flex'" />
+          <div class="cs-portrait-fallback cs-hero-img" id="cs-hero-fallback" style="display:none;font-size:80px;height:200px;width:100%;align-items:center;justify-content:center;background:none">👾</div>
+        </div>
+        <div class="cs-hero-info">
+          <div class="cs-hero-name" id="cs-hero-name">???</div>
+          <div class="cs-hero-level" id="cs-hero-level">SELECCIONA UN PERSONAJE</div>
+          <div class="cs-hero-stars" id="cs-hero-stars"></div>
+          <div class="cs-hero-press" id="cs-hero-press">▼ MUEVE EL CURSOR ▼</div>
+        </div>
+      </div>
+
+      <!-- Center: portrait grid -->
+      <div class="cs-grid-panel">
+        <div class="cs-grid-header">
+          <div class="cs-grid-label">ROSTER — 19 DESIGNERS + ADMIN</div>
+          <div class="cs-grid-hint">↑ ↓ ← → MOVER &nbsp;·&nbsp; ENTER SELECCIONAR</div>
+        </div>
+        <div class="cs-grid" id="cs-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Right: selected player -->
+      <div class="cs-right-panel">
+        <div class="cs-player-label">PLAYER 1</div>
+        <div class="cs-player-portrait" id="cs-player-portrait">
+          <img id="cs-player-img" src="" alt="" style="display:none" />
+        </div>
+        <div class="cs-player-name" id="cs-player-name">---</div>
+        <div class="cs-mode-badge" id="cs-mode-badge">SIN SELECCIÓN</div>
+        <button class="cs-select-btn" id="cs-select-btn" onclick="csConfirmSelect()" style="display:none">
+          ▶ ENTRAR
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Bottom controls -->
+    <div class="cs-bottombar">
+      <div class="cs-controls">
+        <div class="cs-ctrl"><span>↑↓←→</span> MOVER</div>
+        <div class="cs-ctrl"><span>ENTER</span> SELECCIONAR</div>
+        <div class="cs-ctrl"><span>ESC</span> VOLVER</div>
+      </div>
+      <button class="cs-back-btn" onclick="showCharSelectBack()">◀ VOLVER AL MENÚ</button>
+    </div>
+
+  </div>
+</div>
+
 <!-- ═══ MENÚ PRINCIPAL ═══════════════════════════════════════════════════ -->
 <div id="main-menu">
   <div id="menu-stars"></div>
@@ -1799,7 +2140,7 @@
     <!-- TILES -->
     <div class="mmenu-tiles">
 
-      <div class="mmenu-tile mmenu-t-dash" onclick="launchApp('dashboard')">
+      <div class="mmenu-tile mmenu-t-dash" onclick="showCharSelect()">
         <div class="mmenu-tile-top"></div>
         <div class="mmenu-tile-icon">🎮</div>
         <div class="mmenu-tile-name">DASHBOARD</div>
@@ -3379,6 +3720,9 @@ function renderGrid() {
         if (wrap) setTimeout(() => showComboBadge(wrap, d.active_count), 300 + i * 60);
       }
     });
+
+    // Highlight selected designer from char-select
+    setTimeout(applyDesignerFilter, 400);
   });
 }
 
@@ -4110,6 +4454,253 @@ function initCardTilt() {
 }
 
 // ─── MENÚ PRINCIPAL ──────────────────────────────────────────────────────
+// ═══ CHARACTER SELECT ════════════════════════════════════════════════════════
+
+const CS_ROSTER = [
+  { name:'Leo Castro',         nick:'Leo.',      color:'#ff6600', level:'LEAD',       stars:5,   half:false },
+  { name:'Jonathan Fajardo',   nick:'Jon',       color:'#00aaff', level:'LEAD',       stars:5,   half:false },
+  { name:'Yamileth Batista',   nick:'Yami',      color:'#dd00ff', level:'LEAD',       stars:5,   half:false },
+  { name:'Ramiro González',    nick:'Ramiro',    color:'#ffcc00', level:'LEAD',       stars:5,   half:false },
+  { name:'Cristian Delgado',   nick:'Cristian',  color:'#00ff88', level:'SENIOR',     stars:4,   half:true  },
+  { name:'Marcela Sánchez',    nick:'Marcela',   color:'#ff4488', level:'SENIOR',     stars:4,   half:false },
+  { name:'Miguel Díaz',        nick:'Mike',      color:'#44ddff', level:'SENIOR',     stars:4,   half:false },
+  { name:'Luis Wong',          nick:'Wong',      color:'#ffaa00', level:'MID',        stars:4,   half:false },
+  { name:'Jonathan Barrelier', nick:'Barrelier', color:'#8844ff', level:'MID',        stars:4,   half:false },
+  { name:'Ana Turner',         nick:'Ana',       color:'#ff88cc', level:'MID',        stars:4,   half:false },
+  { name:'Paula Lobo',         nick:'Paula',     color:'#00ffcc', level:'MID',        stars:4,   half:false },
+  { name:'Eduardo Rolla',      nick:'Rolla',     color:'#ff8800', level:'MID',        stars:3,   half:true  },
+  { name:'Julio Mejía',        nick:'Julio',     color:'#aaffaa', level:'MID',        stars:3,   half:true  },
+  { name:'Arturo Atencio',     nick:'Arturo',    color:'#ffdd44', level:'MID',        stars:3,   half:true  },
+  { name:'Jesús Ortega',       nick:'Jesus',     color:'#44aaff', level:'MID',        stars:3,   half:true  },
+  { name:'Aris Alain',         nick:'Aris',      color:'#ff44aa', level:'MID',        stars:3,   half:false },
+  { name:'Mariel Marengo',     nick:'Mariel',    color:'#bb44ff', level:'MID',        stars:3,   half:false },
+  { name:'Alexander Caballero',nick:'Alex',      color:'#44ffdd', level:'SENIOR',     stars:2,   half:true  },
+  { name:'Robin De León',      nick:'Robin',     color:'#ff6644', level:'JUNIOR',     stars:2,   half:false },
+  // Admin slot (index 19)
+  { name:'ADMIN MODE',         nick:'ADMIN',     color:'#ffcc00', level:'ALL ACCESS',  stars:5,  half:false, admin:true },
+];
+
+function csAvatarPath(nick) {
+  return `/avatars/${nick.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`;
+}
+
+let csCurrentIdx = 0;
+let csTimerVal   = 99;
+let csTimerInt   = null;
+let csConfirmed  = false;
+let csGridCols   = 5;
+window._ptSelectedDesigner = null; // null = admin/all
+
+function showCharSelect() {
+  const overlay = document.getElementById('char-select');
+  overlay.style.display = 'block';
+  csConfirmed = false;
+  csCurrentIdx = 0;
+  csTimerVal = 99;
+  document.getElementById('cs-timer').classList.remove('urgent');
+
+  // Build grid
+  csGridCols = window.innerWidth < 900 ? 4 : 5;
+  const grid = document.getElementById('cs-grid');
+  grid.style.gridTemplateColumns = `repeat(${csGridCols}, 1fr)`;
+  grid.innerHTML = CS_ROSTER.map((r, i) => {
+    const avatarSrc = r.admin ? '' : csAvatarPath(r.nick);
+    return `
+    <div class="cs-portrait${r.admin?' cs-admin':''}" id="cs-p-${i}"
+      style="--portrait-color:${r.color}"
+      onmouseenter="csSelectPortrait(${i})"
+      onclick="csClickPortrait(${i})">
+      ${r.admin
+        ? `<div class="cs-portrait-fallback" style="--portrait-color:${r.color}">🎛️</div>`
+        : `<img src="${avatarSrc}" alt="${r.nick}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+            style="width:100%;height:100%;object-fit:cover;object-position:center top" />
+           <div class="cs-portrait-fallback" style="display:none;--portrait-color:${r.color}">${r.nick.slice(0,2).toUpperCase()}</div>`
+      }
+      <div class="cs-portrait-overlay">
+        <div class="cs-portrait-name">${r.nick}</div>
+        <div class="cs-portrait-lvl">${r.level}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  csSelectPortrait(0);
+  csStartTimer();
+  document.addEventListener('keydown', csKeyHandler);
+}
+
+function showCharSelectBack() {
+  document.getElementById('char-select').style.display = 'none';
+  clearInterval(csTimerInt);
+  document.removeEventListener('keydown', csKeyHandler);
+}
+
+function csStartTimer() {
+  clearInterval(csTimerInt);
+  csTimerInt = setInterval(() => {
+    csTimerVal--;
+    const el = document.getElementById('cs-timer');
+    if (!el) { clearInterval(csTimerInt); return; }
+    el.textContent = csTimerVal < 10 ? '0' + csTimerVal : csTimerVal;
+    if (csTimerVal <= 5) el.classList.add('urgent');
+    if (csTimerVal <= 0) {
+      clearInterval(csTimerInt);
+      // Auto-confirm current selection
+      csConfirmSelect();
+    }
+  }, 1000);
+}
+
+function csSelectPortrait(idx) {
+  // Remove old cursor
+  document.querySelectorAll('.cs-portrait.selected').forEach(el => el.classList.remove('selected'));
+  csCurrentIdx = idx;
+  const portrait = document.getElementById(`cs-p-${idx}`);
+  if (!portrait) return;
+  portrait.classList.add('selected');
+
+  const r = CS_ROSTER[idx];
+  if (!r) return;
+
+  // Update CSS color var
+  document.documentElement.style.setProperty('--cs-cc', r.color);
+
+  // Update hero panel
+  const heroImg  = document.getElementById('cs-hero-img');
+  const heroFall = document.getElementById('cs-hero-fallback');
+  const heroBg   = document.getElementById('cs-hero-bg');
+  const heroName = document.getElementById('cs-hero-name');
+  const heroLvl  = document.getElementById('cs-hero-level');
+  const heroStars = document.getElementById('cs-hero-stars');
+  const heroPress = document.getElementById('cs-hero-press');
+
+  heroBg.style.background = `radial-gradient(ellipse 90% 90% at 50% 100%, ${r.color}30 0%, transparent 70%)`;
+  heroImg.style.filter = `drop-shadow(0 0 30px ${r.color}88)`;
+
+  if (r.admin) {
+    heroImg.style.display = 'none';
+    heroFall.style.display = 'flex';
+    heroFall.textContent = '🎛️';
+  } else {
+    heroImg.style.display = '';
+    heroFall.style.display = 'none';
+    heroImg.src = csAvatarPath(r.nick);
+    heroImg.onerror = () => {
+      heroImg.style.display = 'none';
+      heroFall.style.display = 'flex';
+      heroFall.textContent = r.nick.slice(0,2).toUpperCase();
+    };
+  }
+
+  heroName.textContent = r.admin ? 'ADMIN' : r.nick.toUpperCase();
+  heroName.style.color = r.color;
+  heroLvl.textContent  = r.level + (r.admin ? '' : ' · ' + r.name.split(' ')[1]);
+  heroStars.textContent = '★'.repeat(r.stars) + (r.half ? '½' : '') + '☆'.repeat(Math.max(0, 5 - r.stars - (r.half?1:0)));
+  heroPress.textContent = '▶ PRESIONA ENTER PARA CONFIRMAR';
+  heroPress.className = 'cs-hero-press ready';
+
+  // Update right panel
+  const ppImg   = document.getElementById('cs-player-img');
+  const ppName  = document.getElementById('cs-player-name');
+  const ppBadge = document.getElementById('cs-mode-badge');
+  const ppBtn   = document.getElementById('cs-select-btn');
+  const ppPort  = document.getElementById('cs-player-portrait');
+
+  ppPort.style.borderColor = r.color;
+  ppPort.style.boxShadow   = `0 0 20px ${r.color}66`;
+
+  if (r.admin) {
+    ppImg.style.display = 'none';
+    ppName.textContent  = 'ADMIN';
+    ppBadge.textContent = 'MODO ADMIN';
+    ppBadge.className   = 'cs-mode-badge admin-mode';
+  } else {
+    ppImg.src = csAvatarPath(r.nick);
+    ppImg.style.display = 'block';
+    ppImg.onerror = () => { ppImg.style.display = 'none'; };
+    ppName.textContent  = r.nick.toUpperCase();
+    ppBadge.textContent = 'MODO DISEÑADOR';
+    ppBadge.className   = 'cs-mode-badge';
+    ppBadge.style.borderColor = r.color + '66';
+    ppBadge.style.color = r.color;
+  }
+  ppName.style.color = r.color;
+  ppBtn.style.display = 'block';
+  ppBtn.style.background = r.color;
+}
+
+function csClickPortrait(idx) {
+  if (csCurrentIdx === idx) {
+    csConfirmSelect();
+  } else {
+    csSelectPortrait(idx);
+  }
+}
+
+function csConfirmSelect() {
+  if (csConfirmed) return;
+  csConfirmed = true;
+  clearInterval(csTimerInt);
+  document.removeEventListener('keydown', csKeyHandler);
+
+  const r = CS_ROSTER[csCurrentIdx];
+  window._ptSelectedDesigner = r.admin ? null : r.name;
+
+  // Flash the selected portrait
+  const portrait = document.getElementById(`cs-p-${csCurrentIdx}`);
+  if (portrait) {
+    portrait.style.transition = 'none';
+    portrait.style.transform = 'scale(1.15)';
+    setTimeout(() => { portrait.style.transform = ''; }, 200);
+  }
+
+  // Transition to app
+  const overlay = document.getElementById('char-select');
+  overlay.style.transition = 'opacity .3s ease';
+  overlay.style.opacity = '0';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    overlay.style.opacity = '1';
+    overlay.style.transition = '';
+    launchApp('dashboard');
+  }, 320);
+}
+
+function csKeyHandler(e) {
+  const total = CS_ROSTER.length;
+  let next = csCurrentIdx;
+  switch(e.key) {
+    case 'ArrowRight': next = (csCurrentIdx + 1) % total; break;
+    case 'ArrowLeft':  next = (csCurrentIdx - 1 + total) % total; break;
+    case 'ArrowDown':  next = Math.min(csCurrentIdx + csGridCols, total - 1); break;
+    case 'ArrowUp':    next = Math.max(csCurrentIdx - csGridCols, 0); break;
+    case 'Enter': case ' ': csConfirmSelect(); return;
+    case 'Escape': showCharSelectBack(); return;
+    default: return;
+  }
+  e.preventDefault();
+  csSelectPortrait(next);
+  // Scroll portrait into view
+  document.getElementById(`cs-p-${next}`)?.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+
+// ─── Filter helpers called after renderGrid ───────────────────────────────────
+
+function applyDesignerFilter() {
+  if (!window._ptSelectedDesigner) return; // admin = show all
+  const name = window._ptSelectedDesigner;
+  // Scroll the selected designer's card to top
+  const all = document.querySelectorAll('.card-tilt-wrap');
+  all.forEach(el => {
+    const nameEl = el.querySelector('.card-hero-name');
+    if (nameEl && nameEl.textContent.trim() === name) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.style.outline = `3px solid ${CS_ROSTER.find(r=>r.name===name)?.color||'#ffcc00'}`;
+      setTimeout(() => { el.style.outline = ''; }, 3000);
+    }
+  });
+}
+
 function launchApp(section = 'dashboard') {
   const menu    = document.getElementById('main-menu');
   const loading = document.getElementById('loading');
