@@ -749,7 +749,7 @@
     .px-dropdown.open .px-dropdown-arrow { transform:rotate(180deg); }
     .px-dropdown-menu {
       display:none; position:absolute; top:calc(100% + 4px); left:0; min-width:100%;
-      background:#0d0d28; border:2px solid var(--blue); z-index:50;
+      background:#0d0d28; border:2px solid var(--blue); z-index:200;
       max-height:220px; overflow-y:auto;
     }
     .px-dropdown-menu::-webkit-scrollbar { width:4px; }
@@ -2018,6 +2018,114 @@
     }
     .login-error.show { display:block; }
     .login-version { font-size:5px; color:var(--border); letter-spacing:2px; }
+
+    /* ─── Login: Mode selector ─── */
+    .login-mode-label { font-size:5.5px; color:var(--dim); letter-spacing:3px; align-self:flex-start; }
+    .login-mode-btns { display:flex; gap:8px; width:100%; }
+    .login-mode-btn {
+      flex:1; font-family:'Press Start 2P',monospace; font-size:6px;
+      padding:10px 6px; background:rgba(255,255,255,.04);
+      border:2px solid rgba(255,255,255,.12); color:var(--dim);
+      cursor:pointer; letter-spacing:1px; border-radius:8px;
+      transition:all .15s; text-align:center; line-height:1.4;
+    }
+    .login-mode-btn:hover { border-color:var(--gold); color:var(--gold); background:rgba(255,204,0,.06); }
+    .login-mode-btn.active {
+      border-color:var(--gold); color:#000; background:var(--gold);
+      box-shadow:4px 4px 0 rgba(120,80,0,.6), 0 0 20px rgba(255,204,0,.3);
+    }
+    .login-mode-btn.m-admin.active  { background:var(--purple); border-color:var(--purple); box-shadow:4px 4px 0 rgba(80,0,120,.6); }
+    .login-mode-btn.m-general.active { background:var(--blue); border-color:var(--blue); box-shadow:4px 4px 0 rgba(0,40,120,.6); }
+    .login-mode-btn.m-designer.active { background:var(--gold); border-color:var(--gold); }
+    .login-mode-icon { font-size:18px; display:block; margin-bottom:6px; }
+    .login-designer-wrap { width:100%; display:none; flex-direction:column; gap:6px; }
+    .login-designer-wrap.visible { display:flex; }
+    .login-designer-select {
+      font-family:'Press Start 2P',monospace; font-size:5.5px;
+      width:100%; padding:10px 12px;
+      background:rgba(0,0,0,.6); color:var(--text);
+      border:2px solid var(--border); outline:none; cursor:pointer;
+    }
+    .login-designer-select:focus { border-color:var(--gold); }
+    .login-pw-hint { font-size:5px; color:var(--dim); letter-spacing:1px; text-align:center; }
+
+    /* ─── Header: grid view switch ─── */
+    .grid-view-switch { display:flex; gap:4px; background:rgba(0,0,0,.3); padding:3px; border-radius:6px; border:1px solid rgba(255,255,255,.1); }
+    .gv-btn {
+      font-family:'Press Start 2P',monospace; font-size:5.5px;
+      padding:5px 9px; background:transparent; border:none; cursor:pointer;
+      color:var(--dim); border-radius:4px; letter-spacing:1px; transition:all .15s;
+    }
+    .gv-btn:hover { color:var(--text); }
+    .gv-btn.active { background:rgba(255,204,0,.15); color:var(--gold); }
+    .mode-chip {
+      font-family:'Press Start 2P',monospace; font-size:5px;
+      padding:4px 8px; border-radius:4px; letter-spacing:1px;
+    }
+    .mode-chip.chip-admin    { background:rgba(170,0,255,.15); border:1px solid rgba(170,0,255,.4); color:#dd00ff; }
+    .mode-chip.chip-general  { background:rgba(0,170,255,.12); border:1px solid rgba(0,170,255,.35); color:#00aaff; }
+    .mode-chip.chip-designer { background:rgba(255,204,0,.12); border:1px solid rgba(255,204,0,.3);  color:var(--gold); }
+    .logout-btn {
+      font-family:'Press Start 2P',monospace; font-size:5px;
+      padding:4px 8px; background:transparent;
+      border:1px solid rgba(255,255,255,.15); color:var(--dim); border-radius:4px;
+      cursor:pointer; letter-spacing:1px; transition:all .12s;
+    }
+    .logout-btn:hover { border-color:var(--red); color:var(--red); }
+
+    /* ─── Mode visibility ─── */
+    /* GENERAL: sin estrellas, sin skill stats, sin settings */
+    body.mode-general .skill-strip,
+    body.mode-general .card-stars,
+    body.mode-general .header-stats,
+    body.mode-general #nav-tab-settings { display:none !important; }
+    /* DESIGNER: idem + sin métricas, sin otros cards (manejado via JS filterDesignerView) */
+    body.mode-designer .skill-strip,
+    body.mode-designer .card-stars,
+    body.mode-designer .header-stats,
+    body.mode-designer #nav-tab-metrics,
+    body.mode-designer #nav-tab-settings { display:none !important; }
+    /* En vista personajes, ocultar el grid normal */
+    body.view-personajes #grid { display:none; }
+    body.view-personajes #personajes-view { display:flex; }
+    /* CS persistent: sin timer, sin bottombar controles, sin back btn */
+    .cs-persistent .cs-timer-wrap,
+    .cs-persistent .cs-back-btn,
+    .cs-persistent .cs-ctrl { display:none !important; }
+    .cs-persistent .cs-title em { color:var(--green); }
+    .cs-persistent .cs-topbar .cs-credits { font-size:6px; color:var(--green); letter-spacing:2px; }
+
+    /* ─── Design unification ─── */
+    /* Section headers — consistent Pixelify Sans display */
+    .section-title {
+      font-family:'Pixelify Sans',monospace; font-weight:700;
+      font-size:clamp(22px,2.8vw,32px); color:var(--gold);
+      letter-spacing:2px; line-height:1;
+      text-shadow:3px 3px 0 rgba(120,80,0,.6), 0 0 30px rgba(255,204,0,.2);
+    }
+    .section-sub { font-size:5.5px; color:var(--dim); letter-spacing:3px; }
+    /* Consistent section padding */
+    .section-wrap {
+      padding:20px 24px; max-width:1600px; margin:0 auto;
+    }
+    /* Nav tabs: slightly more polished */
+    .nav-tabs { display:flex; background:rgba(0,0,0,.4); border-bottom:2px solid var(--border); padding:0 20px; gap:4px; flex-wrap:wrap; }
+    .nav-tab {
+      font-family:'Press Start 2P',monospace; font-size:6.5px;
+      padding:12px 16px; background:transparent;
+      border:none; border-bottom:3px solid transparent; color:var(--dim);
+      cursor:pointer; letter-spacing:1px; transition:all .15s; margin-bottom:-2px;
+    }
+    .nav-tab:hover { color:var(--text); }
+    .nav-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+
+    /* day-theme mode chips */
+    body.day-theme .mode-chip.chip-admin    { background:rgba(170,0,255,.08); }
+    body.day-theme .mode-chip.chip-general  { background:rgba(0,100,200,.08); }
+    body.day-theme .mode-chip.chip-designer { background:rgba(180,110,0,.08); }
+    body.day-theme .login-mode-btn { background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.15); }
+    body.day-theme .login-designer-select { background:#f8f4ff; color:var(--text); border-color:var(--border); }
+    body.day-theme .gv-btn.active { background:rgba(180,110,0,.12); }
   </style>
 </head>
 <body>
@@ -2030,11 +2138,46 @@
     <div class="login-title">PIXEL <span>TRAFFIC</span></div>
     <div class="login-sub">EL JOINT CREATIVO · DESIGN OPS</div>
     <div class="login-divider"></div>
-    <div class="login-label">▶ CONTRASEÑA</div>
+
+    <!-- Paso 1: Selecciona tu modo -->
+    <div class="login-mode-label">▶ SELECCIONA TU MODO</div>
+    <div class="login-mode-btns">
+      <button class="login-mode-btn m-admin"    onclick="selectLoginMode('admin')">
+        <span class="login-mode-icon">👑</span>ADMIN
+      </button>
+      <button class="login-mode-btn m-general"  onclick="selectLoginMode('general')">
+        <span class="login-mode-icon">🌐</span>GENERAL
+      </button>
+      <button class="login-mode-btn m-designer" onclick="selectLoginMode('designer')">
+        <span class="login-mode-icon">🎨</span>DISEÑADOR
+      </button>
+    </div>
+
+    <!-- Paso 2 (solo DISEÑADOR): selecciona tu nombre -->
+    <div class="login-designer-wrap" id="login-designer-wrap">
+      <div class="login-mode-label">▶ SELECCIONA TU NOMBRE</div>
+      <select class="login-designer-select" id="login-designer-select">
+        <option value="">— ELIGE TU NOMBRE —</option>
+        <option>Leo Castro</option><option>Jonathan Fajardo</option>
+        <option>Yamileth Batista</option><option>Ramiro González</option>
+        <option>Cristian Delgado</option><option>Marcela Sánchez</option>
+        <option>Miguel Díaz</option><option>Luis Wong</option>
+        <option>Jonathan Barrelier</option><option>Ana Turner</option>
+        <option>Paula Lobo</option><option>Eduardo Rolla</option>
+        <option>Julio Mejía</option><option>Arturo Atencio</option>
+        <option>Jesús Ortega</option><option>Aris Alain</option>
+        <option>Mariel Marengo</option><option>Alexander Caballero</option>
+        <option>Robin De León</option>
+      </select>
+    </div>
+
+    <!-- Paso 3: Contraseña -->
+    <div class="login-label" id="login-pw-label">▶ CONTRASEÑA</div>
     <input class="login-input" id="login-pw" type="password" placeholder="INSERT PASSWORD..."
       onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password" />
+    <div class="login-pw-hint" id="login-pw-hint"></div>
     <div class="login-error" id="login-error">⚠ CONTRASEÑA INCORRECTA</div>
-    <button class="login-btn" onclick="doLogin()">▶ INICIAR SESIÓN</button>
+    <button class="login-btn" onclick="doLogin()">▶ INGRESAR</button>
     <div class="login-version">PIXEL TRAFFIC OS v0.4 · © 2026</div>
   </div>
 </div>
@@ -2140,7 +2283,7 @@
     <!-- TILES -->
     <div class="mmenu-tiles">
 
-      <div class="mmenu-tile mmenu-t-dash" onclick="showCharSelect()">
+      <div class="mmenu-tile mmenu-t-dash" onclick="launchApp('dashboard')">
         <div class="mmenu-tile-top"></div>
         <div class="mmenu-tile-icon">🎮</div>
         <div class="mmenu-tile-name">DASHBOARD</div>
@@ -2208,11 +2351,14 @@
   </div>
   <button class="pixel-btn" id="btn-alltime" onclick="toggleAllTime()" style="color:var(--dim); border-color:var(--border);">∞ ALL TIME</button>
   <div class="header-actions">
-    <!-- View mode switch -->
-    <div class="view-mode-switch">
-      <button class="vms-btn active" id="vms-admin" onclick="setViewMode('admin')">👑 ADMIN</button>
-      <button class="vms-btn" id="vms-designer" onclick="setViewMode('designer')">🎨 DISEÑADOR</button>
+    <!-- Grid view toggle: TARJETAS / PERSONAJES -->
+    <div class="grid-view-switch" id="grid-view-switch">
+      <button class="gv-btn active" id="gv-cards"     onclick="setGridView('cards')">🃏 TARJETAS</button>
+      <button class="gv-btn"        id="gv-personajes" onclick="setGridView('personajes')">👾 PERSONAJES</button>
     </div>
+    <!-- Mode chip + logout -->
+    <div class="mode-chip chip-admin" id="mode-chip" style="display:none"></div>
+    <button class="logout-btn" id="logout-btn" onclick="doLogout()" style="display:none">✕ SALIR</button>
     <!-- Theme toggle -->
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
     <div class="sync-status"><div class="dot" id="sync-dot"></div><span id="sync-text">—</span></div>
@@ -2227,19 +2373,23 @@
 </div>
 
 <div id="settings-view">
-  <div class="settings-title">⚙ SETTINGS</div>
-  <div class="settings-sub">EDITAR HABILIDADES Y RATING DE CADA DISEÑADOR</div>
-  <div class="settings-grid" id="settings-grid"></div>
-  <div style="margin-top:24px;display:flex;justify-content:flex-end;">
-    <button class="settings-save-btn" id="save-all-btn" onclick="saveAllSkills()" style="max-width:320px;">
-      GUARDAR TODOS LOS CAMBIOS
-    </button>
+  <div class="section-wrap">
+    <div class="section-title">⚙ SETTINGS</div>
+    <div class="section-sub" style="margin-bottom:20px;">EDITAR HABILIDADES Y RATING DE CADA DISEÑADOR</div>
+    <div class="settings-grid" id="settings-grid"></div>
+    <div style="margin-top:24px;display:flex;justify-content:flex-end;">
+      <button class="settings-save-btn" id="save-all-btn" onclick="saveAllSkills()" style="max-width:320px;">
+        GUARDAR TODOS LOS CAMBIOS
+      </button>
+    </div>
   </div>
 </div>
 
 <div id="metrics-view">
   <!-- Período -->
-  <div style="display:flex;align-items:center;gap:10px;padding:16px 24px 0;border-bottom:2px solid var(--border);background:#09091e;">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 24px;border-bottom:2px solid var(--border);background:rgba(0,0,0,.3);">
+    <span style="font-family:'Pixelify Sans',monospace;font-weight:700;font-size:16px;color:var(--gold);letter-spacing:1px;">MÉTRICAS</span>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 6px;"></div>
     <span style="font-size:6px;color:var(--dim);letter-spacing:2px;">PERÍODO:</span>
     <button class="sort-chip active" onclick="setMetricsPeriod('all',this)">TODO</button>
     <button class="sort-chip" onclick="setMetricsPeriod('month',this)">ESTE MES</button>
@@ -2399,6 +2549,8 @@
 </div>
 
 <main><div class="grid" id="grid"></div></main>
+<!-- Vista personajes: char-select persistente dentro del dashboard -->
+<div id="personajes-view" style="display:none; flex-direction:column; min-height:calc(100vh - 130px); position:relative;"></div>
 </div><!-- /dashboard-view -->
 <footer>INSERT COIN TO CONTINUE · EL JOINT CREATIVO © 2026 · PIXEL TRAFFIC v0.4</footer>
 
@@ -2504,7 +2656,10 @@
 
 <script>
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
-let _authToken = localStorage.getItem('pt-token') || '';
+let _authToken    = localStorage.getItem('pt-token')    || '';
+let _authMode     = localStorage.getItem('pt-mode')     || '';
+let _authDesigner = localStorage.getItem('pt-designer') || '';
+let _loginMode    = ''; // modo seleccionado en el login UI (antes de autenticar)
 
 // Wrapper fetch autenticado — añade X-Token a todas las llamadas API
 function apiFetch(url, opts = {}) {
@@ -2514,28 +2669,59 @@ function apiFetch(url, opts = {}) {
   });
 }
 
+// ─── Login: selección de modo ─────────────────────────────────────────────────
+function selectLoginMode(mode) {
+  _loginMode = mode;
+  document.querySelectorAll('.login-mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.login-mode-btn.m-${mode}`)?.classList.add('active');
+  const dw = document.getElementById('login-designer-wrap');
+  const hint = document.getElementById('login-pw-hint');
+  if (mode === 'designer') {
+    dw.classList.add('visible');
+    hint.textContent = '▸ tu contraseña es tu primer nombre en minúsculas';
+  } else {
+    dw.classList.remove('visible');
+    hint.textContent = '';
+  }
+  document.getElementById('login-pw').focus();
+}
+
 async function doLogin() {
-  const pw = document.getElementById('login-pw').value.trim();
+  const pw  = document.getElementById('login-pw').value.trim();
   const err = document.getElementById('login-error');
+  if (!_loginMode) { err.textContent = '⚠ SELECCIONA UN MODO'; err.classList.add('show'); setTimeout(()=>err.classList.remove('show'),2000); return; }
   if (!pw) return;
+
+  const designer = _loginMode === 'designer'
+    ? document.getElementById('login-designer-select').value
+    : undefined;
+  if (_loginMode === 'designer' && !designer) {
+    err.textContent = '⚠ SELECCIONA TU NOMBRE'; err.classList.add('show');
+    setTimeout(()=>err.classList.remove('show'),2000); return;
+  }
 
   try {
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw }),
+      body: JSON.stringify({ password: pw, mode: _loginMode, designer }),
     });
     const data = await res.json();
     if (data.ok && data.token) {
-      _authToken = data.token;
-      localStorage.setItem('pt-token', _authToken);
+      _authToken    = data.token;
+      _authMode     = data.mode;
+      _authDesigner = data.designer || '';
+      localStorage.setItem('pt-token',    _authToken);
+      localStorage.setItem('pt-mode',     _authMode);
+      localStorage.setItem('pt-designer', _authDesigner);
       err.classList.remove('show');
-      // Ocultar login, mostrar menú
+      applyMode(_authMode, _authDesigner);
       const overlay = document.getElementById('login-overlay');
       overlay.style.transition = 'opacity .35s ease';
       overlay.style.opacity = '0';
       setTimeout(() => { overlay.style.display = 'none'; }, 380);
     } else {
+      err.textContent = '⚠ CONTRASEÑA INCORRECTA';
       err.classList.add('show');
       document.getElementById('login-pw').value = '';
       setTimeout(() => err.classList.remove('show'), 2500);
@@ -2544,6 +2730,31 @@ async function doLogin() {
     err.textContent = '⚠ ERROR DE CONEXIÓN';
     err.classList.add('show');
   }
+}
+
+function doLogout() {
+  localStorage.removeItem('pt-token');
+  localStorage.removeItem('pt-mode');
+  localStorage.removeItem('pt-designer');
+  _authToken = ''; _authMode = ''; _authDesigner = '';
+  // Reset body classes
+  document.body.className = document.body.className
+    .replace(/mode-\S+/g,'').replace(/view-\S+/g,'').trim();
+  // Reset login UI
+  document.querySelectorAll('.login-mode-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('login-designer-wrap').classList.remove('visible');
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-pw-hint').textContent = '';
+  _loginMode = '';
+  const overlay = document.getElementById('login-overlay');
+  overlay.style.opacity = '1';
+  overlay.style.display = 'flex';
+  // Go back to menu
+  document.getElementById('main-menu').style.display = '';
+  document.getElementById('main-menu').style.opacity  = '1';
+  ['header','#app-content','.nav-tabs','#settings-view','#metrics-view'].forEach(s=>{
+    document.querySelector(s)?.style && (document.querySelector(s).style.display = '');
+  });
 }
 
 async function checkAuth() {
@@ -2561,14 +2772,15 @@ async function checkAuth() {
     const valid = await checkAuth();
     if (valid) {
       loginOverlay.style.display = 'none';
+      applyMode(_authMode, _authDesigner);
       return;
     } else {
-      // Token expiró (server reiniciado sin TOKEN_SECRET fijo)
       localStorage.removeItem('pt-token');
-      _authToken = '';
+      localStorage.removeItem('pt-mode');
+      localStorage.removeItem('pt-designer');
+      _authToken = ''; _authMode = ''; _authDesigner = '';
     }
   }
-  // Mostrar login
   loginOverlay.style.display = 'flex';
 })();
 
@@ -2778,24 +2990,153 @@ function sfxRefresh() { [440,494,523,587,659].forEach((f,i)=>playTone(f,0.08,'sq
 function sfxBusy()    { [220,220,220].forEach((_,i)=>playTone(220,0.1,'sawtooth',0.1,i*0.18)); }
 function sfxAvailable(){ playTone(880,0.12,'sine',0.07); setTimeout(()=>playTone(1047,0.18,'sine',0.06),100); }
 
-// ─── VIEW MODE (admin / designer) ────────────────────────────────────────
-let currentViewMode = 'admin';
-function setViewMode(mode) {
-  currentViewMode = mode;
-  document.body.classList.toggle('designer-mode', mode === 'designer');
-  document.getElementById('vms-admin').classList.toggle('active', mode === 'admin');
-  document.getElementById('vms-designer').classList.toggle('active', mode === 'designer');
-  // Si estábamos en métricas o settings, volver al dashboard en modo diseñador
-  if (mode === 'designer') {
-    const activeTab = document.querySelector('.nav-tab.active');
-    const onHiddenView = activeTab && (activeTab.id === 'nav-tab-metrics' || activeTab.id === 'nav-tab-settings');
-    if (onHiddenView) {
-      const dashTab = document.querySelector('.nav-tab:first-child');
-      switchView('dashboard', dashTab);
-    }
+// ─── MODE SYSTEM (admin / general / designer) ────────────────────────────
+function applyMode(mode, designer) {
+  // Remove old mode classes
+  document.body.classList.remove('mode-admin','mode-general','mode-designer','designer-mode');
+  if (mode) document.body.classList.add('mode-' + mode);
+
+  // Mode chip
+  const chip = document.getElementById('mode-chip');
+  const logoutBtn = document.getElementById('logout-btn');
+  if (chip && mode) {
+    const labels = { admin:'👑 ADMIN', general:'🌐 GENERAL', designer:'🎨 ' + (designer ? designer.split(' ')[0].toUpperCase() : 'DISEÑADOR') };
+    chip.textContent = labels[mode] || mode.toUpperCase();
+    chip.className = `mode-chip chip-${mode}`;
+    chip.style.display = '';
+    if (logoutBtn) logoutBtn.style.display = '';
   }
-  sfxAvailable();
-  localStorage.setItem('pt-view-mode', mode);
+
+  // Designer mode: enforce dashboard-only view
+  if (mode === 'designer' || mode === 'general') {
+    const activeTab = document.querySelector('.nav-tab.active');
+    const onHiddenView = activeTab && (activeTab.id === 'nav-tab-settings' ||
+      (mode === 'designer' && activeTab.id === 'nav-tab-metrics'));
+    if (onHiddenView) switchView('dashboard', document.querySelector('.nav-tab:first-child'));
+  }
+}
+
+// ─── GRID VIEW (cards / personajes) ──────────────────────────────────────
+let currentGridView = 'cards';
+
+function setGridView(view) {
+  currentGridView = view;
+  document.getElementById('gv-cards').classList.toggle('active', view === 'cards');
+  document.getElementById('gv-personajes').classList.toggle('active', view === 'personajes');
+
+  const gridEl = document.getElementById('grid');
+  const pvEl   = document.getElementById('personajes-view');
+
+  if (view === 'cards') {
+    document.body.classList.remove('view-personajes');
+    gridEl.style.display = '';
+    pvEl.style.display   = 'none';
+    clearInterval(csTimerInt);
+    document.removeEventListener('keydown', csKeyHandler);
+  } else {
+    document.body.classList.add('view-personajes');
+    gridEl.style.display = 'none';
+    pvEl.style.display   = 'flex';
+    showPersonajesView();
+  }
+  localStorage.setItem('pt-grid-view', view);
+}
+
+function showPersonajesView() {
+  const pv = document.getElementById('personajes-view');
+  // Render the char-select UI inside personajes-view
+  pv.innerHTML = `
+    <div class="cs-inner">
+      <div class="cs-topbar">
+        <div class="cs-title">EL JOINT · <em>PIXEL TRAFFIC</em> · SELECCIONA DISEÑADOR</div>
+        <div class="cs-credits" style="font-size:6px;color:var(--green);letter-spacing:2px;">TOCA UN PERSONAJE<br>PARA VER SUS TAREAS</div>
+      </div>
+      <div class="cs-main">
+        <div class="cs-hero-panel" id="pv-hero-panel">
+          <div class="cs-hero-bg" id="pv-hero-bg"></div>
+          <div class="cs-hero-img-wrap" id="pv-hero-img-wrap">
+            <img class="cs-hero-img" id="pv-hero-img" src="" alt=""
+              onerror="this.style.display='none';document.getElementById('pv-hero-fallback').style.display='flex'" />
+            <div class="cs-portrait-fallback cs-hero-img" id="pv-hero-fallback"
+              style="display:none;font-size:72px;height:180px;width:100%;align-items:center;justify-content:center;background:none">👾</div>
+          </div>
+          <div class="cs-hero-info">
+            <div class="cs-hero-name" id="pv-hero-name" style="font-size:28px">PIXEL TRAFFIC</div>
+            <div class="cs-hero-level" id="pv-hero-level">TOCA UN PERSONAJE</div>
+            <div class="cs-hero-stars" id="pv-hero-stars"></div>
+            <div class="cs-hero-press" id="pv-hero-press" style="display:none"></div>
+          </div>
+        </div>
+        <div class="cs-grid-panel">
+          <div class="cs-grid-header">
+            <div class="cs-grid-label">DISEÑADORES ACTIVOS — EL JOINT CREATIVO</div>
+            <div class="cs-grid-hint">HOVER = PREVIEW · CLICK = VER TAREAS</div>
+          </div>
+          <div class="cs-grid" id="pv-grid" style="grid-auto-rows:minmax(0,148px)"></div>
+        </div>
+      </div>
+    </div>`;
+
+  // Build portrait grid using live allDesigners if available, else static roster
+  const pvGrid = document.getElementById('pv-grid');
+  const roster = allDesigners.length ? allDesigners : CS_ROSTER.filter(r=>!r.admin);
+
+  // In designer mode: only show the authenticated designer
+  const filterName = (_authMode === 'designer' && _authDesigner) ? _authDesigner : null;
+
+  pvGrid.innerHTML = roster
+    .filter(d => !filterName || (d.name || d.name) === filterName)
+    .map((d, i) => {
+      const name  = d.name  || CS_ROSTER[i]?.name  || '?';
+      const nick  = d.nick  || (name.split(' ')[0]);
+      const color = d.color || CS_ROSTER.find(r=>r.name===name)?.color || '#ffcc00';
+      const level = d.level || CS_ROSTER.find(r=>r.name===name)?.level || '';
+      const realIdx = allDesigners.indexOf(d);
+      return `
+      <div class="cs-portrait" style="--portrait-color:${color}"
+        onmouseenter="pvHover('${name.replace(/'/g,"\\'")}','${color}')"
+        onclick="pvClick(${realIdx >= 0 ? realIdx : i})">
+        <img src="${csAvatarPath(nick)}" alt="${nick}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+          style="width:100%;height:100%;object-fit:cover;object-position:center top" />
+        <div class="cs-portrait-fallback" style="display:none;--portrait-color:${color}">${nick.slice(0,2).toUpperCase()}</div>
+        <div class="cs-portrait-overlay">
+          <div class="cs-portrait-name">${nick}</div>
+          <div class="cs-portrait-lvl">${level}</div>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function pvHover(name, color) {
+  document.documentElement.style.setProperty('--cs-cc', color);
+  const r = CS_ROSTER.find(r => r.name === name) || {};
+  const d = allDesigners.find(d => d.name === name) || {};
+  const nick = (d.nick || r.nick || name.split(' ')[0]).toUpperCase();
+
+  const heroImg  = document.getElementById('pv-hero-img');
+  const heroFall = document.getElementById('pv-hero-fallback');
+  if (heroImg) {
+    heroImg.style.display = ''; heroFall.style.display = 'none';
+    heroImg.src = csAvatarPath(r.nick || name.split(' ')[0]);
+    heroImg.onerror = () => { heroImg.style.display='none'; heroFall.style.display='flex'; heroFall.textContent=nick.slice(0,2); };
+    heroImg.style.filter = `drop-shadow(0 0 30px ${color}88)`;
+  }
+  const bg = document.getElementById('pv-hero-bg');
+  if (bg) bg.style.background = `radial-gradient(ellipse 90% 90% at 50% 100%, ${color}30 0%, transparent 70%)`;
+  const nameEl = document.getElementById('pv-hero-name');
+  if (nameEl) { nameEl.textContent = nick; nameEl.style.color = color; }
+  const lvlEl = document.getElementById('pv-hero-level');
+  if (lvlEl) lvlEl.textContent = (r.level || '') + (d.active_count != null ? ` · ${d.active_count} ACTIVAS` : '');
+  const starsEl = document.getElementById('pv-hero-stars');
+  if (starsEl && _authMode === 'admin') {
+    starsEl.textContent = r.stars ? '★'.repeat(r.stars) + (r.half?'½':'') : '';
+  }
+}
+
+function pvClick(idx) {
+  if (idx < 0 || idx >= allDesigners.length) return;
+  openDesigner(idx);
 }
 
 // ─── THEME (noche / día) ──────────────────────────────────────────────────
@@ -2812,20 +3153,20 @@ function toggleTheme() {
 
 // Restaurar preferencias al cargar (silencioso — sin SFX)
 (function restorePrefs() {
-  const savedMode = localStorage.getItem('pt-view-mode');
-  const savedTheme = localStorage.getItem('pt-day-theme');
-  if (savedMode === 'designer') {
-    currentViewMode = 'designer';
-    document.body.classList.add('designer-mode');
-    document.getElementById('vms-admin').classList.remove('active');
-    document.getElementById('vms-designer').classList.add('active');
-  }
+  const savedTheme    = localStorage.getItem('pt-day-theme');
+  const savedGridView = localStorage.getItem('pt-grid-view');
   if (savedTheme === '1') {
     isDayTheme = true;
     document.body.classList.add('day-theme');
     const btn = document.getElementById('theme-btn');
     if (btn) { btn.textContent = '☀️'; btn.title = 'Cambiar a tema noche'; }
   }
+  if (savedGridView === 'personajes') {
+    currentGridView = 'personajes';
+    document.getElementById('gv-cards')?.classList.remove('active');
+    document.getElementById('gv-personajes')?.classList.add('active');
+  }
+  // Mode is restored inside initAuth()
 })();
 
 function toggleSound(btn) {
@@ -3721,8 +4062,11 @@ function renderGrid() {
       }
     });
 
-    // Highlight selected designer from char-select
-    setTimeout(applyDesignerFilter, 400);
+    // Apply mode filter + refresh personajes view if active
+    setTimeout(() => {
+      applyDesignerFilter();
+      if (currentGridView === 'personajes') showPersonajesView();
+    }, 400);
   });
 }
 
@@ -4687,11 +5031,19 @@ function csKeyHandler(e) {
 // ─── Filter helpers called after renderGrid ───────────────────────────────────
 
 function applyDesignerFilter() {
-  if (!window._ptSelectedDesigner) return; // admin = show all
+  // In designer mode: hide all cards except their own
+  if (_authMode === 'designer' && _authDesigner) {
+    document.querySelectorAll('.card-tilt-wrap').forEach(el => {
+      const nameEl = el.querySelector('.card-hero-name');
+      const isTheirs = nameEl && nameEl.textContent.trim() === _authDesigner;
+      el.style.display = isTheirs ? '' : 'none';
+    });
+    return;
+  }
+  // Otherwise just highlight the selected designer from char-select entry
+  if (!window._ptSelectedDesigner) return;
   const name = window._ptSelectedDesigner;
-  // Scroll the selected designer's card to top
-  const all = document.querySelectorAll('.card-tilt-wrap');
-  all.forEach(el => {
+  document.querySelectorAll('.card-tilt-wrap').forEach(el => {
     const nameEl = el.querySelector('.card-hero-name');
     if (nameEl && nameEl.textContent.trim() === name) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });

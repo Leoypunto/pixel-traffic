@@ -10,25 +10,66 @@ const app  = express();
 const PORT = process.env.PORT || 3333;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-const ACCESS_KEY   = process.env.ACCESS_KEY || 'pixeltraffic2026';
-// TOKEN_SECRET: fijo si se define en .env, aleatorio si no (reinicios invalidan tokens)
+const ACCESS_KEY   = process.env.ACCESS_KEY   || 'pixeltraffic2026';
+const GENERAL_KEY  = process.env.GENERAL_KEY  || 'eljoint2026';
 const TOKEN_SECRET = process.env.TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
-const VALID_TOKEN  = crypto.createHmac('sha256', TOKEN_SECRET).update(ACCESS_KEY).digest('hex');
+
+function makeToken(payload) {
+  const data = JSON.stringify(payload);
+  const sig   = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('hex');
+  return Buffer.from(data).toString('base64') + '.' + sig;
+}
+
+function verifyToken(raw) {
+  if (!raw) return null;
+  const [b64, sig] = raw.split('.');
+  if (!b64 || !sig) return null;
+  const data = Buffer.from(b64, 'base64').toString();
+  const expected = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('hex');
+  if (sig !== expected) return null;
+  try { return JSON.parse(data); } catch { return null; }
+}
+
+// Lista de diseñadores para auth de modo designer
+const DESIGNERS = [
+  'Leo Castro','Jonathan Fajardo','Yamileth Batista','Ramiro González',
+  'Cristian Delgado','Marcela Sánchez','Miguel Díaz','Luis Wong',
+  'Jonathan Barrelier','Ana Turner','Paula Lobo','Eduardo Rolla',
+  'Julio Mejía','Arturo Atencio','Jesús Ortega','Aris Alain',
+  'Mariel Marengo','Alexander Caballero','Robin De León',
+];
 
 function requireAuth(req, res, next) {
-  const token = req.headers['x-token'] || req.query._t;
-  if (token === VALID_TOKEN) return next();
+  const raw = req.headers['x-token'] || req.query._t;
+  const payload = verifyToken(raw);
+  if (payload && payload.mode) { req.authPayload = payload; return next(); }
   res.status(401).json({ error: 'Unauthorized' });
 }
 
 // Login endpoint (público, sin auth)
 app.post('/api/auth', express.json(), (req, res) => {
-  const { password } = req.body || {};
-  if (password === ACCESS_KEY) {
-    res.json({ ok: true, token: VALID_TOKEN });
-  } else {
-    res.status(401).json({ ok: false, error: 'Contraseña incorrecta' });
+  const { password, mode, designer } = req.body || {};
+
+  if (mode === 'admin' && password === ACCESS_KEY) {
+    return res.json({ ok: true, token: makeToken({ mode: 'admin' }), mode: 'admin' });
   }
+  if (mode === 'general' && password === GENERAL_KEY) {
+    return res.json({ ok: true, token: makeToken({ mode: 'general' }), mode: 'general' });
+  }
+  if (mode === 'designer' && designer) {
+    const match = DESIGNERS.find(d => d.toLowerCase() === designer.toLowerCase());
+    if (match) {
+      // password = primer nombre del diseñador en minúsculas
+      const expectedPw = match.split(' ')[0].toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, ''); // sin tildes
+      const givenPw = (password || '').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '');
+      if (givenPw === expectedPw) {
+        return res.json({ ok: true, token: makeToken({ mode: 'designer', designer: match }), mode: 'designer', designer: match });
+      }
+    }
+  }
+  res.status(401).json({ ok: false, error: 'Contraseña incorrecta' });
 });
 
 // Todas las rutas /api/* requieren token, excepto /api/auth
