@@ -1,15 +1,12 @@
 // Pixel Traffic — Service Worker v1
-// Estrategia: cache-first para assets estáticos, network-first para API
+// Estrategia: network-first para HTML, cache-first para assets
 
-const CACHE_NAME = 'pixel-traffic-v4';
+const CACHE_NAME = 'pixel-traffic-v31';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap',
 ];
 
-// Instalar: cachear assets estáticos
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -17,7 +14,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activar: limpiar caches viejas
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -27,12 +23,11 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch: network-first para /api/*, cache-first para el resto
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API siempre desde la red (datos en tiempo real)
+  // API siempre desde la red
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request).catch(() =>
@@ -44,7 +39,13 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Avatares: network-first con fallback a cache
+  // index.html — siempre network-first, sin caché
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Avatares: network-first con fallback
   if (url.pathname.startsWith('/avatars/')) {
     event.respondWith(
       fetch(request)
@@ -54,7 +55,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Assets estáticos: cache-first
+  // Resto: cache-first
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached;

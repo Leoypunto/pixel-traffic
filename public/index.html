@@ -41,6 +41,18 @@
     @keyframes flicker { 0%,95%,100%{opacity:1} 96%{opacity:.7} 98%{opacity:.9} }
     @keyframes blink { 50%{opacity:0} }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes cursorSpark {
+      0%   { opacity:1; transform:translate(-50%,-50%) scale(1); }
+      100% { opacity:0; transform:translate(-50%,-50%) scale(3.5); }
+    }
+    .cursor-spark {
+      position:fixed; pointer-events:none; z-index:99999;
+      color:#00e5ff; font-size:14px; line-height:1;
+      animation: cursorSpark .45s ease-out both;
+      text-shadow: 0 0 8px #00e5ff, 0 0 20px #00e5ff;
+    }
+    /* cursor global */
+    *, *::before, *::after { cursor: inherit !important; }
     @keyframes fadeIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
     @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
     @keyframes working-glow { 0%,100%{box-shadow:0 0 4px currentColor,0 0 10px currentColor} 50%{box-shadow:0 0 8px currentColor,0 0 22px currentColor,0 0 40px currentColor} }
@@ -492,71 +504,146 @@
 
     .cs-grid {
       display:grid;
-      grid-template-columns:repeat(5,1fr);
-      grid-auto-rows:minmax(0,148px);
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(4, 1fr);
       gap:6px;
-      overflow-y:auto;
+      overflow:hidden;
       flex:1; min-height:0;
-      padding-right:2px;
-      align-content:start;
     }
-    .cs-grid::-webkit-scrollbar { width:3px; }
-    .cs-grid::-webkit-scrollbar-thumb { background:rgba(255,204,0,.35); border-radius:2px; }
-    @media (max-width:900px) { .cs-grid { grid-template-columns:repeat(4,1fr); } }
+    @media (max-width:900px) { .cs-grid { grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(5,1fr); } }
 
-    .cs-portrait {
-      border:2px solid rgba(255,255,255,.12);
-      border-radius:6px;
-      background:#0a0818;
-      position:relative; overflow:hidden; cursor:pointer;
-      transition:border-color .15s, transform .15s;
+    @keyframes portraitEnter {
+      from { opacity:0; transform:scale(.8) translateY(16px); filter:brightness(.6); }
+      to   { opacity:1; transform:scale(1)  translateY(0);    filter:brightness(1); }
     }
-    .cs-portrait:hover { border-color:rgba(255,255,255,.4); transform:scale(1.05); }
+    @keyframes portraitPulse {
+      0%,100% { box-shadow: 0 4px 20px rgba(0,0,0,.7), 0 0 8px  color-mix(in srgb,var(--portrait-color,#8844ff) 25%,transparent), inset 0 0 30px rgba(0,0,0,.35); }
+      50%     { box-shadow: 0 4px 20px rgba(0,0,0,.7), 0 0 20px color-mix(in srgb,var(--portrait-color,#8844ff) 45%,transparent), inset 0 0 30px rgba(0,0,0,.35); }
+    }
+    @keyframes scanDown {
+      from { transform:translateY(-100%); }
+      to   { transform:translateY(100%); }
+    }
+    @keyframes badgePop {
+      0%   { transform:scale(0) rotate(-12deg); opacity:0; }
+      70%  { transform:scale(1.15) rotate(3deg); }
+      100% { transform:scale(1) rotate(0deg); opacity:1; }
+    }
+    .cs-portrait {
+      border: 3px solid var(--portrait-color, #6633cc);
+      border-radius: 10px;
+      background:
+        radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--portrait-color,#6633cc) 55%, transparent) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--portrait-color,#6633cc) 20%, transparent) 0%, transparent 50%),
+        linear-gradient(180deg, #0e0b26 0%, #050315 100%);
+      position: relative; overflow: hidden; cursor: pointer;
+      transition: transform .22s cubic-bezier(.23,1,.32,1), box-shadow .22s;
+      animation: portraitEnter .45s cubic-bezier(.23,1,.32,1) both,
+                 portraitPulse calc(2.8s + var(--pulse-offset,0s)) ease-in-out var(--pulse-delay,0s) infinite;
+      box-shadow: 0 4px 24px rgba(0,0,0,.8),
+                  0 0 16px color-mix(in srgb, var(--portrait-color,#6633cc) 45%, transparent),
+                  inset 0 0 40px rgba(0,0,0,.3);
+    }
+    /* Scanline scan beam */
+    .cs-portrait::before {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(180deg,
+        transparent 0%, rgba(255,255,255,.03) 50%, transparent 100%);
+      height:40%; top:0;
+      animation: scanDown calc(4s + var(--pulse-delay,0s)) linear infinite;
+      pointer-events:none; z-index:1;
+    }
+    /* Shine en hover */
+    .cs-portrait::after {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(125deg,
+        transparent 20%,
+        color-mix(in srgb, var(--portrait-color,#fff) 15%, transparent) 50%,
+        transparent 80%);
+      opacity:0; transition:opacity .25s;
+      pointer-events:none; z-index:2;
+    }
+    .cs-portrait:hover {
+      border-color: var(--portrait-color,rgba(255,255,255,.8));
+      transform: scale(1.06) translateY(-4px);
+      box-shadow: 0 14px 36px rgba(0,0,0,.8),
+                  0 0 28px color-mix(in srgb, var(--portrait-color,#6633cc) 60%, transparent),
+                  inset 0 0 20px color-mix(in srgb, var(--portrait-color,#6633cc) 12%, transparent);
+      z-index: 3;
+    }
+    .cs-portrait:hover::after { opacity:1; }
     .cs-portrait.selected {
-      border-color:var(--cs-cc,var(--gold));
-      --cs-cc: var(--portrait-color, #ffcc00);
-      animation: csCursorPulse .9s ease-in-out infinite;
-      transform:scale(1.08);
-      z-index:2;
+      border-color: var(--portrait-color, var(--gold));
+      transform: scale(1.07) translateY(-4px);
+      z-index: 4;
+      animation: portraitEnter .45s cubic-bezier(.23,1,.32,1) both,
+                 portraitPulse .9s ease-in-out infinite;
     }
     .cs-portrait img {
       width:100%; height:100%;
-      object-fit:cover; object-position:center top;
-      pointer-events:none;
+      object-fit:cover; object-position:center 10%;
+      pointer-events:none; position:relative; z-index:0;
     }
     .cs-portrait-fallback {
-      width:100%; height:100%;
+      width:100%; height:100%; position:relative; z-index:0;
       display:flex; align-items:center; justify-content:center;
-      font-family:'VT323',monospace; font-size:clamp(18px,2.2vw,28px);
+      font-family:'VT323',monospace; font-size:clamp(26px,3.2vw,42px);
       color:var(--portrait-color,#fff);
-      background:linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.6) 100%);
     }
+    /* Task count badge — esquina superior derecha */
+    .cs-task-badge {
+      position:absolute; top:7px; right:7px; z-index:5;
+      background: color-mix(in srgb, var(--portrait-color,#ffcc00) 85%, #000);
+      color:#000;
+      font-family:'Press Start 2P',monospace; font-size:clamp(5px,.65vw,8px);
+      padding:3px 6px; border-radius:4px; line-height:1;
+      box-shadow: 0 0 10px color-mix(in srgb, var(--portrait-color,#ffcc00) 70%, transparent);
+      animation: badgePop .4s cubic-bezier(.23,1,.32,1) both;
+      animation-delay: calc(var(--entry-delay,0ms) + 200ms);
+    }
+    .cs-task-badge.zero {
+      background:rgba(255,255,255,.1); color:rgba(255,255,255,.35);
+      box-shadow:none; font-size:clamp(4px,.5vw,6px);
+    }
+    /* Overlay nombre */
     .cs-portrait-overlay {
-      position:absolute; bottom:0; left:0; right:0;
-      background:linear-gradient(transparent,rgba(0,0,0,.85));
-      padding:2px 4px 4px;
+      position:absolute; bottom:0; left:0; right:0; z-index:4;
+      background:linear-gradient(transparent 0%, rgba(6,4,22,.65) 35%, rgba(6,4,22,.96) 100%);
+      padding:20px 8px 7px;
     }
     .cs-portrait-name {
-      font-family:'VT323',monospace; font-size:clamp(9px,1.1vw,13px);
+      font-family:'VT323',monospace; font-size:clamp(16px,1.9vw,24px);
       color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      line-height:1.2;
+      line-height:1; text-shadow:0 2px 8px rgba(0,0,0,.9);
     }
     .cs-portrait-lvl {
-      font-size:clamp(4px,.55vw,6px); color:rgba(255,255,255,.55);
-      letter-spacing:1px; margin-top:1px;
+      font-size:clamp(5px,.58vw,7px);
+      color: color-mix(in srgb, var(--portrait-color,#aaa) 80%, #fff);
+      letter-spacing:2px; margin-top:3px; text-transform:uppercase;
+      text-shadow:0 0 6px var(--portrait-color,transparent);
+    }
+    /* Barra inferior en color */
+    .cs-portrait-bar {
+      position:absolute; bottom:0; left:0; right:0; height:3px; z-index:5;
+      background: linear-gradient(90deg, transparent, var(--portrait-color,rgba(255,255,255,.4)) 30%, var(--portrait-color,rgba(255,255,255,.4)) 70%, transparent);
     }
     /* Admin tile */
-    .cs-portrait.cs-admin {
-      background:linear-gradient(135deg,#0d0828 0%,#1a0540 100%);
-      border-color:rgba(255,204,0,.3);
+    .cs-portrait.cs-admin { border-color:rgba(255,204,0,.6); }
+    /* Vacante slot */
+    .cs-vacante {
+      border:2px dashed rgba(255,255,255,.1) !important;
+      background:rgba(255,255,255,.02) !important;
+      cursor:default; box-shadow:none !important;
+      animation:none !important;
     }
-    .cs-portrait.cs-admin .cs-portrait-fallback { font-size:clamp(22px,2.8vw,36px); }
-    /* Color bar top per portrait */
-    .cs-portrait::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:3px;
-      background:var(--portrait-color,rgba(255,255,255,.2));
-      z-index:1;
+    .cs-vacante::before,.cs-vacante::after { display:none; }
+    .cs-vacante:hover { transform:none !important; z-index:1; }
+    .cs-vacante-inner {
+      width:100%; height:100%;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
     }
+    .cs-vacante-icon { font-size:clamp(22px,2.8vw,36px); color:rgba(255,255,255,.12); font-family:'Press Start 2P',monospace; }
+    .cs-vacante-label { font-size:clamp(4px,.6vw,7px); color:rgba(255,255,255,.12); letter-spacing:4px; }
 
     /* ─── RIGHT: right panel (selected player info) ─── */
     .cs-right-panel {
@@ -676,13 +763,34 @@
     .load-version { font-size:5px; color:var(--border); letter-spacing:2px; margin-top:4px; }
 
     /* Header */
-    header { position:sticky; top:0; z-index:10; background:linear-gradient(180deg,#100820,#08051a); border-bottom:3px solid var(--blue); padding:14px 24px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; box-shadow:0 4px 30px rgba(0,229,255,0.18),0 0 0 1px rgba(0,229,255,0.08); }
-    .logo { font-size:10px; color:var(--gold); text-shadow:0 0 12px var(--gold),0 0 30px rgba(255,229,0,.4); white-space:nowrap; }
+    header { position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#100820,#08051a); border-bottom:2px solid var(--blue); padding:0 16px; height:52px; display:flex; align-items:center; gap:8px; flex-wrap:nowrap; box-shadow:0 4px 30px rgba(0,229,255,0.18),0 0 0 1px rgba(0,229,255,0.08); overflow:visible; min-width:0; }
+    .logo { font-size:9px; color:var(--gold); text-shadow:0 0 12px var(--gold),0 0 30px rgba(255,229,0,.4); white-space:nowrap; flex-shrink:0; }
     .logo span { color:var(--blue); text-shadow:0 0 10px var(--blue); }
-    .header-stats { display:flex; gap:16px; flex-wrap:wrap; flex:1; justify-content:center; }
-    .hstat { font-size:7px; color:var(--dim); display:flex; align-items:center; gap:6px; }
-    .hstat strong { color:var(--gold); font-size:11px; text-shadow:0 0 8px rgba(255,229,0,.5); }
-    .header-actions { display:flex; gap:10px; align-items:center; margin-left:auto; }
+    /* Legacy header-stats hidden — IDs kept in DOM as hidden spans */
+    .header-stats { display:none; }
+    .hstat { display:none; }
+    .header-actions { display:contents; } /* flatten into header flex */
+    /* ─── NEW HEADER ELEMENTS ─── */
+    .h-sep { width:1px; height:20px; background:rgba(255,255,255,.1); flex-shrink:0; }
+    .h-stat-kpi { display:flex; align-items:baseline; gap:5px; flex-shrink:0; white-space:nowrap; }
+    .h-stat-kpi .h-label { font-size:5px; color:var(--dim); letter-spacing:2px; }
+    .h-stat-kpi strong { font-size:16px; color:var(--red); text-shadow:0 0 12px rgba(255,60,60,.7); line-height:1; }
+    .h-nav { display:flex; gap:0; flex-shrink:0; }
+    .h-nav-btn { font-family:'Press Start 2P',monospace; font-size:6px; background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; color:var(--dim); letter-spacing:1px; padding:0 10px; height:52px; transition:color .15s, border-color .15s; white-space:nowrap; }
+    .h-nav-btn:hover { color:var(--text); }
+    .h-nav-btn.active { color:var(--gold); border-bottom-color:var(--gold); text-shadow:0 0 8px rgba(255,229,0,.5); }
+    /* Date nav compacto */
+    .fd-date-nav { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+    .fd-nav-btn { font-family:'Press Start 2P',monospace; font-size:7px; background:none; border:1px solid rgba(255,255,255,.15); color:var(--dim); cursor:pointer; padding:4px 7px; transition:color .1s, border-color .1s; }
+    .fd-nav-btn:hover { color:var(--text); border-color:var(--blue); }
+    .fd-date-label { font-size:7px; color:var(--gold); padding:0 6px; white-space:nowrap; letter-spacing:1px; }
+    .fd-pill { font-family:'Press Start 2P',monospace; font-size:6px; background:none; border:1px solid rgba(255,255,255,.12); color:var(--dim); cursor:pointer; padding:4px 8px; transition:all .1s; white-space:nowrap; letter-spacing:1px; }
+    .fd-pill:hover, .fd-pill.active { color:var(--gold); border-color:var(--gold); }
+    /* Sort compacto */
+    .fd-sort { display:flex; gap:2px; flex-shrink:0; }
+    .fd-sort-btn { font-family:'Press Start 2P',monospace; font-size:6px; background:none; border:1px solid rgba(255,255,255,.1); color:var(--dim); cursor:pointer; padding:4px 7px; transition:all .1s; }
+    .fd-sort-btn:hover { color:var(--text); border-color:rgba(255,255,255,.3); }
+    .fd-sort-btn.active { color:var(--gold); border-color:var(--gold); background:rgba(255,229,0,.07); }
     .pixel-btn { font-family:'Press Start 2P',monospace; font-size:7px; padding:7px 12px; background:rgba(0,229,255,.08); color:var(--blue); border:2px solid var(--blue); cursor:pointer; letter-spacing:1px; transition:all .08s; text-shadow:0 0 6px rgba(0,229,255,.5); box-shadow: 3px 3px 0 rgba(0,100,180,.6); }
     .pixel-btn:hover { background:var(--blue); color:#000; transform:translate(-3px,-3px); box-shadow:6px 6px 0 rgba(0,80,140,.8),0 0 20px rgba(0,229,255,.3); text-shadow:none; }
     .pixel-btn:active { transform:translate(2px,2px); box-shadow:1px 1px 0 rgba(0,80,140,.8); }
@@ -704,7 +812,7 @@
       border-bottom:2px solid var(--border);
       display:flex; gap:10px; flex-wrap:wrap; align-items:center;
     }
-    .search-input-wrap { position:relative; flex:1; min-width:180px; max-width:320px; }
+    .search-input-wrap { position:relative; flex:0 1 200px; min-width:120px; max-width:220px; }
     .search-input {
       font-family:'Press Start 2P',monospace; font-size:6px;
       width:100%; padding:7px 10px 7px 28px;
@@ -735,7 +843,8 @@
     .estado-chip.active { color:var(--blue); border-color:var(--blue); background:rgba(0,191,255,.1); }
 
     /* custom dropdown */
-    .px-dropdown { position:relative; display:inline-block; }
+    .px-dropdown { position:relative; display:inline-block; z-index:1; }
+    .px-dropdown.open { z-index:400; }
     .px-dropdown-btn {
       font-family:'Press Start 2P',monospace; font-size:6px;
       padding:7px 28px 7px 10px; background:#0a0a1a; color:var(--text);
@@ -785,8 +894,10 @@
     mark { background:rgba(255,215,0,.35); color:var(--gold); font-style:normal; }
 
     /* Grid */
-    main { padding:20px; max-width:1800px; margin:0 auto; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(380px,1fr)); gap:20px; }
+    main { padding:20px; max-width:1800px; margin:0 auto; min-width:0; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(340px,100%),1fr)); gap:24px; padding:24px; }
+    body { overflow-x:clip; }
+    html { overflow-x:clip; }
 
     /* ═══════════════════════════════════════════════════════════════
        CARD — Caja metálica estilo Smash Bros + tilt 3D on hover
@@ -794,6 +905,14 @@
     /* Wrapper: hace el tilt 3D — SIN animation (el fill-mode congela transform y bloquea tilt) */
     .card-tilt-wrap {
       will-change: transform;
+      position: relative;
+      padding-top: 70px;
+      transition: transform .1s ease;
+      transform-style: preserve-3d;
+    }
+    /* CSS tilt fallback — JS override en mousemove */
+    .card-tilt-wrap:hover {
+      transform: perspective(900px) rotateX(-2deg) rotateY(4deg) scale3d(1.03,1.03,1.03);
     }
 
     .card {
@@ -813,12 +932,11 @@
         0 0 0 1px rgba(0,0,0,.6),
         0 0 30px color-mix(in srgb, var(--cc, transparent) 25%, transparent);
       display: flex; flex-direction: column;
+      height: 540px;
+      padding-top: 175px; /* espacio donde "entra" la foto flotante */
       position: relative;
-      /* NO overflow:hidden — bloquea 3D transforms */
-      /* clip-path eliminado — overflow:hidden en .card + tilt en .card-tilt-wrap */
       overflow: hidden;
       transition: box-shadow .25s ease;
-      animation: cardEnter .35s ease-out both;
     }
     /* ── Border light chase (ring que corre por el borde en hover) ── */
     .card::after {
@@ -915,28 +1033,37 @@
     /* Shine overlay — reflejo que sigue el mouse */
     .card-shine {
       position:absolute; inset:0; z-index:18; pointer-events:none;
-      transition: background .05s;
       mix-blend-mode: screen;
     }
+    /* Specular sharp highlight — nítido como tarjeta holográfica */
+    .card-specular {
+      position:absolute; inset:0; z-index:19; pointer-events:none; border-radius:12px;
+      mix-blend-mode: screen; opacity:0; transition: opacity .2s;
+    }
+    .card:hover .card-specular { opacity:1; }
+    /* Rim light — borde luminoso opuesto a la "luz" */
+    .card-rim {
+      position:absolute; inset:0; z-index:17; pointer-events:none; border-radius:12px;
+      opacity:0; transition: opacity .3s;
+    }
+    .card:hover .card-rim { opacity:1; }
 
     /* Foto — ocupa la parte superior completa */
-    .card-photo {
-      width: 100%; height: 210px;
-      border-radius: 12px 12px 0 0;
-      position: relative; overflow: hidden; flex-shrink: 0;
-      background: color-mix(in srgb, var(--cc, #220060) 70%, #020110);
+    /* Foto flotante FUERA del card — solo el PNG del personaje desborda */
+    .card-float-photo {
+      position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 8px);
+      height: 260px;
+      z-index: 5;
+      background: transparent; /* sin fondo — solo el personaje */
       cursor: pointer;
+      pointer-events: none; /* el click lo maneja el card-body debajo */
     }
-    .card-photo::before {
-      content:''; position:absolute; inset:0; z-index:1;
-      background: repeating-linear-gradient(-50deg, rgba(0,0,0,.12) 0, rgba(0,0,0,.12) 1px, transparent 1px, transparent 7px);
-      pointer-events:none;
-    }
-    .card-photo::after {
-      content:''; position:absolute; inset:0; z-index:2;
-      background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,.06) 1px, rgba(0,0,0,.06) 2px);
-      pointer-events:none;
-    }
+    .card-float-photo .card-photo-overlay { pointer-events: auto; }
+    .card-float-photo .card-photo-gradient { display:none; } /* sin gradiente — el fondo queda en el card */
+    /* card-photo legacy (ya no se usa como sección) */
+    .card-photo { display:none; }
     /* Gradiente en la base de la foto para mezclar con el cuerpo */
     .card-photo-gradient {
       position:absolute; bottom:0; left:0; right:0; height:70px; z-index:3; pointer-events:none;
@@ -946,17 +1073,19 @@
     .card-photo-inner {
       position:absolute; inset:0; z-index:0;
       display:flex; align-items:center; justify-content:center;
-      /* Fade solo abajo = foto "cae" suavemente al fondo de color */
-      -webkit-mask-image: linear-gradient(to bottom, black 55%, rgba(0,0,0,.6) 78%, transparent 100%);
-      mask-image: linear-gradient(to bottom, black 55%, rgba(0,0,0,.6) 78%, transparent 100%);
+      /* Fade suave solo al pie del personaje */
+      -webkit-mask-image: linear-gradient(to bottom, black 70%, rgba(0,0,0,.5) 88%, transparent 100%);
+      mask-image: linear-gradient(to bottom, black 70%, rgba(0,0,0,.5) 88%, transparent 100%);
     }
     .card-photo-inner img.avatar-photo {
       width:100%; height:100%; object-fit:contain; object-position:center bottom;
       filter: contrast(1.12) saturate(1.5) brightness(1.05);
-      transition: transform .3s cubic-bezier(0.23,1,0.32,1);
+      transition: transform .4s cubic-bezier(0.23,1,0.32,1), filter .3s ease;
+      transform-origin: center bottom;
     }
     .card:hover .card-photo-inner img.avatar-photo {
-      transform: scale(1.1);
+      transform: scale(1.15);
+      filter: contrast(1.18) saturate(1.7) brightness(1.12);
     }
     .card-photo-inner canvas { display:block; }
     /* Nombre gigante flotando de fondo */
@@ -992,7 +1121,7 @@
     }
 
     /* Cuerpo de la card — info debajo de la foto */
-    .card-body { padding:12px 14px 0; flex:1; display:flex; flex-direction:column; cursor:pointer; }
+    .card-body { padding:12px 14px 0; flex:0 0 auto; display:flex; flex-direction:column; cursor:pointer; }
     .card-body:hover .card-hero-name { text-shadow: 3px 3px 0 rgba(0,0,0,.9), 0 0 28px color-mix(in srgb, var(--cc) 90%, transparent); }
 
     /* NOMBRE — VT323 grande, impacto máximo */
@@ -1101,10 +1230,11 @@
 
     /* ─── PANEL DISPONIBLES ──────────────────────────────────────────────── */
     .available-panel {
-      margin: 0 24px 0; padding: 10px 16px;
+      padding: 6px 20px;
       background: linear-gradient(135deg, rgba(0,255,136,.06), rgba(0,255,136,.03));
-      border: 2px solid rgba(0,255,136,.25); border-radius: 12px;
+      border-bottom: 1px solid rgba(0,255,136,.2);
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      position: sticky; top: 52px; z-index: 14;
       animation: availablePop .4s ease-out both;
     }
     .available-label {
@@ -1144,7 +1274,9 @@
     }
 
     /* Tasks */
-    .task-list { padding:10px 14px; }
+    .task-list { padding:10px 14px; flex:1; overflow-y:auto; min-height:0; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+    .task-list::-webkit-scrollbar { width:4px; }
+    .task-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
     .task-header { font-family:'VT323',monospace; font-size:20px; color:var(--purple); letter-spacing:4px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:baseline; text-shadow:0 0 8px rgba(204,68,255,.5); line-height:1; }
     .task-header span { color:var(--gold); text-shadow:0 0 6px rgba(255,229,0,.5); }
     .task-item { display:flex; align-items:flex-start; gap:5px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:8.5px; color:#9090c0; line-height:1.5; cursor:pointer; transition:background .1s; border-radius:2px; }
@@ -1566,7 +1698,7 @@
     #metrics-view.visible { display:block; animation: viewEnter .2s ease-out forwards; }
     #dashboard-view { animation: viewEnter .25s ease-out both; }
     #dashboard-view.hidden { display:none; }
-    @keyframes viewEnter { from{opacity:0;transform:translateX(10px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes viewEnter { from{opacity:0} to{opacity:1} }
 
     .metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
     @media(max-width:900px){ .metrics-grid { grid-template-columns:1fr; } }
@@ -2049,14 +2181,19 @@
     .login-pw-hint { font-size:5px; color:var(--dim); letter-spacing:1px; text-align:center; }
 
     /* ─── Header: grid view switch ─── */
-    .grid-view-switch { display:flex; gap:4px; background:rgba(0,0,0,.3); padding:3px; border-radius:6px; border:1px solid rgba(255,255,255,.1); }
-    .gv-btn {
-      font-family:'Press Start 2P',monospace; font-size:5.5px;
-      padding:5px 9px; background:transparent; border:none; cursor:pointer;
-      color:var(--dim); border-radius:4px; letter-spacing:1px; transition:all .15s;
+    .grid-view-switch {
+      display:flex; gap:2px;
+      background:rgba(8,4,20,.8);
+      padding:3px; border-radius:20px;
+      border:1px solid rgba(255,255,255,.1);
     }
-    .gv-btn:hover { color:var(--text); }
-    .gv-btn.active { background:rgba(255,204,0,.15); color:var(--gold); }
+    .gv-btn {
+      font-size:14px; padding:5px 8px; background:transparent; border:none;
+      cursor:pointer; border-radius:16px; transition:all .15s; opacity:.45;
+      line-height:1;
+    }
+    .gv-btn:hover { opacity:.8; }
+    .gv-btn.active { background:rgba(255,255,255,.12); opacity:1; }
     .mode-chip {
       font-family:'Press Start 2P',monospace; font-size:5px;
       padding:4px 8px; border-radius:4px; letter-spacing:1px;
@@ -2073,14 +2210,22 @@
     .logout-btn:hover { border-color:var(--red); color:var(--red); }
 
     /* ─── Mode visibility ─── */
-    /* GENERAL: sin estrellas, sin skill stats, sin settings */
+    /* GENERAL: sin estrellas, sin skill stats, sin settings, sin rango */
     body.mode-general .skill-strip,
-    body.mode-general .card-stars,
+    body.mode-general .nivel-badge,
+    body.mode-general .cs-portrait-lvl,
+    body.mode-general .card-hero-sub,
+    body.mode-general .star-val,
+    body.mode-general #dm-skill-panel,
     body.mode-general .header-stats,
     body.mode-general #nav-tab-settings { display:none !important; }
-    /* DESIGNER: idem + sin métricas, sin otros cards (manejado via JS filterDesignerView) */
+    /* DESIGNER: idem + sin métricas, sin otros cards */
     body.mode-designer .skill-strip,
-    body.mode-designer .card-stars,
+    body.mode-designer .nivel-badge,
+    body.mode-designer .cs-portrait-lvl,
+    body.mode-designer .card-hero-sub,
+    body.mode-designer .star-val,
+    body.mode-designer #dm-skill-panel,
     body.mode-designer .header-stats,
     body.mode-designer #nav-tab-metrics,
     body.mode-designer #nav-tab-settings { display:none !important; }
@@ -2337,39 +2482,64 @@
 
 <header>
   <div class="logo">🎮 PIXEL <span>TRAFFIC</span></div>
-  <div class="header-stats">
-    <div class="hstat">DISEÑADORES <strong id="h-designers">—</strong></div>
-    <div class="hstat">ACTIVAS <strong id="h-active" style="color:var(--red)">—</strong></div>
-    <div class="hstat">COMPLETADAS <strong id="h-completed" style="color:var(--green)">—</strong></div>
-    <div class="hstat">TOTAL <strong id="h-total">—</strong></div>
+  <!-- Hidden compat IDs for JS -->
+  <span id="h-designers" style="display:none">—</span>
+  <span id="h-completed" style="display:none">—</span>
+  <span id="h-total" style="display:none">—</span>
+  <div class="h-sep"></div>
+  <!-- ACTIVAS — always visible -->
+  <div class="h-stat-kpi">
+    <span class="h-label">ACTIVAS</span>
+    <strong id="h-active">—</strong>
   </div>
-  <div class="date-nav" id="date-nav">
-    <button class="pixel-btn" id="btn-prev" onclick="changeDate(-1)">◄</button>
-    <span id="h-date" style="font-size:8px; color:var(--gold); padding:0 8px; white-space:nowrap;">—</span>
-    <button class="pixel-btn" id="btn-next" onclick="changeDate(1)">►</button>
-  </div>
-  <button class="pixel-btn" id="btn-alltime" onclick="toggleAllTime()" style="color:var(--dim); border-color:var(--border);">∞ ALL TIME</button>
-  <div class="header-actions">
-    <!-- Grid view toggle: TARJETAS / PERSONAJES -->
-    <div class="grid-view-switch" id="grid-view-switch">
-      <button class="gv-btn active" id="gv-cards"     onclick="setGridView('cards')">🃏 TARJETAS</button>
-      <button class="gv-btn"        id="gv-personajes" onclick="setGridView('personajes')">👾 PERSONAJES</button>
+  <!-- Controles de filtro: solo visibles en dashboard -->
+  <div id="h-dash-controls" style="display:contents">
+    <div class="h-sep"></div>
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search-input" type="text" placeholder="BUSCAR..."
+        oninput="onSearch(this.value)" autocomplete="off" spellcheck="false" />
+      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
     </div>
-    <!-- Mode chip + logout -->
-    <div class="mode-chip chip-admin" id="mode-chip" style="display:none"></div>
-    <button class="logout-btn" id="logout-btn" onclick="doLogout()" style="display:none">✕ SALIR</button>
-    <!-- Theme toggle -->
-    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
-    <div class="sync-status"><div class="dot" id="sync-dot"></div><span id="sync-text">—</span></div>
-    <button class="pixel-btn" onclick="refresh()">⟳ SYNC</button>
-  </div>
+    <div class="fd-date-nav" id="date-nav">
+      <button class="fd-nav-btn" id="btn-prev" onclick="changeDate(-1)">◄</button>
+      <span id="h-date" class="fd-date-label">—</span>
+      <button class="fd-nav-btn" id="btn-next" onclick="changeDate(1)">►</button>
+    </div>
+    <button class="fd-pill" id="btn-alltime" onclick="toggleAllTime()">∞</button>
+    <div class="h-sep"></div>
+    <div class="fd-sort" id="fd-sort-group">
+      <button class="fd-sort-btn active" onclick="setSort('carga',this)" data-sort="carga" title="Por carga">⚡</button>
+      <button class="fd-sort-btn" onclick="setSort('nombre',this)" data-sort="nombre" title="A-Z">AZ</button>
+      <button class="fd-sort-btn" onclick="setSort('valor',this)" data-sort="valor" title="Por valor">★</button>
+    </div>
+    <div class="h-sep"></div>
+    <div class="px-dropdown" id="dd-marca">
+      <div class="px-dropdown-btn" onclick="toggleDropdown('dd-marca')">
+        <span id="dd-marca-label">CLIENTE: TODOS</span>
+        <span class="px-dropdown-arrow">▼</span>
+      </div>
+      <div class="px-dropdown-menu" id="dd-marca-menu">
+        <div class="px-dropdown-item selected" data-val="">TODOS</div>
+      </div>
+    </div>
+  </div><!-- /h-dash-controls -->
+  <!-- Spacer -->
+  <div style="flex:1;min-width:4px"></div>
+  <!-- Nav pills -->
+  <nav class="h-nav">
+    <button class="h-nav-btn active" onclick="switchView('dashboard', this)">DASHBOARD</button>
+    <button class="h-nav-btn" id="nav-tab-metrics" onclick="switchView('metrics', this)">MÉTRICAS</button>
+    <button class="h-nav-btn" id="nav-tab-settings" onclick="switchView('settings', this)">⚙</button>
+  </nav>
+  <div class="h-sep"></div>
+  <!-- Mode + auth + theme + sync -->
+  <div class="mode-chip chip-admin" id="mode-chip" style="display:none"></div>
+  <button class="logout-btn" id="logout-btn" onclick="doLogout()" style="display:none">✕ SALIR</button>
+  <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+  <div class="sync-status"><div class="dot" id="sync-dot"></div><span id="sync-text">—</span></div>
+  <button class="pixel-btn" onclick="refresh()">⟳ SYNC</button>
 </header>
-
-<div class="nav-tabs">
-  <button class="nav-tab active" onclick="switchView('dashboard', this)">DASHBOARD</button>
-  <button class="nav-tab" id="nav-tab-metrics" onclick="switchView('metrics', this)">METRICAS</button>
-  <button class="nav-tab" id="nav-tab-settings" onclick="switchView('settings', this)" style="margin-left:auto;">⚙ SETTINGS</button>
-</div>
 
 <div id="settings-view">
   <div class="section-wrap">
@@ -2479,77 +2649,25 @@
   </div>
 </div>
 
-<div id="dashboard-view">
 
-<!-- PANEL DISPONIBLES -->
+<!-- LIBRE AHORA: strip sticky debajo del header -->
 <div id="available-panel" class="available-panel available-panel-empty">
-  <span class="available-label">🟢 LIBRE AHORA</span>
+  <span class="available-label">🟢 LIBRE</span>
   <div class="available-chips" id="available-chips"></div>
 </div>
 
-<div class="filters">
-  <span class="filter-label">MOSTRAR:</span>
-  <button class="filter-chip active" onclick="setFilter('all',this)">TODOS</button>
-  <button class="filter-chip" onclick="setFilter('busy',this)">BUSY (5+)</button>
-  <button class="filter-chip" onclick="setFilter('active',this)">CON TAREAS</button>
-  <button class="filter-chip" onclick="setFilter('idle',this)">SIN TAREAS</button>
-</div>
+<div id="dashboard-view">
 
-<div class="search-bar">
-  <!-- BUSCAR -->
-  <div class="search-input-wrap">
-    <span class="search-icon">🔍</span>
-    <input class="search-input" id="search-input" type="text" placeholder="BUSCAR TAREA..."
-      oninput="onSearch(this.value)" autocomplete="off" spellcheck="false" />
-    <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+<div style="display:flex; justify-content:flex-end; padding:10px 24px 0;">
+  <div class="grid-view-switch" id="grid-view-switch">
+    <button class="gv-btn active" id="gv-cards"     onclick="setGridView('cards')">🃏</button>
+    <button class="gv-btn"        id="gv-personajes" onclick="setGridView('personajes')">👾</button>
   </div>
-
-  <div class="adv-sep"></div>
-
-  <!-- ESTADO -->
-  <span class="filter-label" style="flex-shrink:0">ESTADO:</span>
-  <div class="estado-chips" id="estado-chips">
-    <button class="estado-chip active" onclick="setEstado('',this)">TODOS</button>
-    <button class="estado-chip" onclick="setEstado('Diseño',this)">DISEÑO</button>
-    <button class="estado-chip" onclick="setEstado('Creatividad',this)">CREATIVIDAD</button>
-    <button class="estado-chip" onclick="setEstado('En Aprobación',this)">EN APROBACIÓN</button>
-    <button class="estado-chip" onclick="setEstado('Cambios en Diseño',this)">CAMBIOS</button>
-    <button class="estado-chip" onclick="setEstado('Animación',this)">ANIMACIÓN</button>
-    <button class="estado-chip" onclick="setEstado('Edición',this)">EDICIÓN</button>
-    <button class="estado-chip" onclick="setEstado('Finalizar',this)">FINALIZAR</button>
-    <button class="estado-chip" onclick="setEstado('stand by',this)">STAND BY</button>
-  </div>
-
-  <div class="adv-sep"></div>
-
-  <!-- CLIENTE (marca del diseñador) -->
-  <div class="px-dropdown" id="dd-marca">
-    <div class="px-dropdown-btn" onclick="toggleDropdown('dd-marca')">
-      <span id="dd-marca-label">CLIENTE: TODOS</span>
-      <span class="px-dropdown-arrow">▼</span>
-    </div>
-    <div class="px-dropdown-menu" id="dd-marca-menu">
-      <div class="px-dropdown-item selected" onclick="pickMarca('', this)">TODOS</div>
-    </div>
-  </div>
-
-  <div class="adv-sep"></div>
-
-  <!-- ORDENAR -->
-  <span class="filter-label" style="flex-shrink:0">ORDEN:</span>
-  <div class="sort-chips">
-    <button class="sort-chip active" onclick="setSort('carga',this)">⚡ CARGA</button>
-    <button class="sort-chip" onclick="setSort('nombre',this)">A-Z</button>
-    <button class="sort-chip" onclick="setSort('valor',this)">★ VALOR</button>
-  </div>
-
-  <span class="results-count" id="results-count"></span>
-  <button class="sound-btn" id="sound-btn" onclick="toggleSound(this)" title="Sonidos 8-bit">🔇</button>
 </div>
 
 <main><div class="grid" id="grid"></div></main>
 <!-- Vista personajes: char-select persistente dentro del dashboard -->
-<div id="personajes-view" style="display:none; flex-direction:column; height:calc(100vh - 130px); position:relative;"></div>
+<div id="personajes-view" style="display:none; flex-direction:column; position:relative;"></div>
 </div><!-- /dashboard-view -->
 <footer>INSERT COIN TO CONTINUE · EL JOINT CREATIVO © 2026 · PIXEL TRAFFIC v0.4</footer>
 
@@ -2751,7 +2869,7 @@ function doLogout() {
   // Go back to menu
   document.getElementById('main-menu').style.display = '';
   document.getElementById('main-menu').style.opacity  = '1';
-  ['header','#app-content','.nav-tabs','#settings-view','#metrics-view'].forEach(s=>{
+  ['header','#app-content','#settings-view','#metrics-view'].forEach(s=>{
     document.querySelector(s)?.style && (document.querySelector(s).style.display = '');
   });
 }
@@ -2961,7 +3079,7 @@ function getSemaforo(activeTasks) {
 }
 
 // ─── SONIDOS 8-BIT (Web Audio API) ───────────────────────────────────────
-let soundEnabled = false;
+let soundEnabled = true;
 let _audioCtx = null;
 function getAudioCtx() {
   if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -3008,10 +3126,10 @@ function applyMode(mode, designer) {
 
   // Designer mode: enforce dashboard-only view
   if (mode === 'designer' || mode === 'general') {
-    const activeTab = document.querySelector('.nav-tab.active');
+    const activeTab = document.querySelector('.h-nav-btn.active');
     const onHiddenView = activeTab && (activeTab.id === 'nav-tab-settings' ||
       (mode === 'designer' && activeTab.id === 'nav-tab-metrics'));
-    if (onHiddenView) switchView('dashboard', document.querySelector('.nav-tab:first-child'));
+    if (onHiddenView) switchView('dashboard', document.querySelector('.h-nav-btn:first-child'));
   }
 }
 
@@ -3043,6 +3161,21 @@ function setGridView(view) {
 
 function showPersonajesView() {
   const pv = document.getElementById('personajes-view');
+  // Ajustar altura: mide el offsetTop real del elemento cuando innerHeight > 0
+  const setHeight = () => {
+    if (window.innerHeight < 100) return; // preview headless edge case
+    const top = pv.getBoundingClientRect().top + window.scrollY;
+    // getBoundingClientRect gives viewport-relative top; use it directly
+    const vpTop = pv.getBoundingClientRect().top;
+    const h = window.innerHeight - vpTop - 4;
+    if (h > 100) pv.style.height = h + 'px';
+  };
+  requestAnimationFrame(() => requestAnimationFrame(setHeight));
+  // Also set via ResizeObserver so it updates on window resize
+  if (!pv._resizeObs) {
+    pv._resizeObs = new ResizeObserver(() => setHeight());
+    pv._resizeObs.observe(document.documentElement);
+  }
   // Render the char-select UI inside personajes-view
   pv.innerHTML = `
     <div class="cs-inner">
@@ -3071,7 +3204,7 @@ function showPersonajesView() {
             <div class="cs-grid-label">DISEÑADORES ACTIVOS — EL JOINT CREATIVO</div>
             <div class="cs-grid-hint">HOVER = PREVIEW · CLICK = VER TAREAS</div>
           </div>
-          <div class="cs-grid" id="pv-grid" style="grid-auto-rows:minmax(0,148px)"></div>
+          <div class="cs-grid" id="pv-grid"></div>
         </div>
       </div>
     </div>`;
@@ -3084,27 +3217,41 @@ function showPersonajesView() {
   const filterName = (_authMode === 'designer' && _authDesigner) ? _authDesigner : null;
 
   pvGrid.innerHTML = roster
-    .filter(d => !filterName || (d.name || d.name) === filterName)
+    .filter(d => !filterName || d.name === filterName)
     .map((d, i) => {
-      const name  = d.name  || CS_ROSTER[i]?.name  || '?';
-      const nick  = d.nick  || (name.split(' ')[0]);
-      const color = d.color || CS_ROSTER.find(r=>r.name===name)?.color || '#ffcc00';
-      const level = d.level || CS_ROSTER.find(r=>r.name===name)?.level || '';
-      const realIdx = allDesigners.indexOf(d);
+      const name       = d.name || CS_ROSTER[i]?.name || '?';
+      // Always look up nick from CS_ROSTER — the API doesn't return nick
+      const rEntry     = CS_ROSTER.find(r => r.name === name);
+      const nick       = rEntry?.nick || name.split(' ')[0];
+      const color      = d.color  || rEntry?.color || '#ffcc00';
+      const level      = d.level  || rEntry?.level || '';
+      const activeCount = d.active_count != null ? d.active_count : null;
+      const realIdx    = allDesigners.indexOf(d);
+      const delay      = i * 45;
+      const pulseDelay = (i * 0.18).toFixed(2);
       return `
-      <div class="cs-portrait" style="--portrait-color:${color}"
+      <div class="cs-portrait pv-portrait"
+        style="--portrait-color:${color};--entry-delay:${delay}ms;--pulse-delay:${pulseDelay}s;animation-delay:${delay}ms"
         onmouseenter="pvHover('${name.replace(/'/g,"\\'")}','${color}')"
         onclick="pvClick(${realIdx >= 0 ? realIdx : i})">
+        ${activeCount !== null ? `<div class="cs-task-badge${activeCount === 0 ? ' zero' : ''}">${activeCount}</div>` : ''}
         <img src="${csAvatarPath(nick)}" alt="${nick}"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-          style="width:100%;height:100%;object-fit:cover;object-position:center top" />
-        <div class="cs-portrait-fallback" style="display:none;--portrait-color:${color}">${nick.slice(0,2).toUpperCase()}</div>
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <div class="cs-portrait-fallback" style="display:none">${nick.slice(0,2).toUpperCase()}</div>
         <div class="cs-portrait-overlay">
           <div class="cs-portrait-name">${nick}</div>
           <div class="cs-portrait-lvl">${level}</div>
         </div>
+        <div class="cs-portrait-bar"></div>
       </div>`;
-    }).join('');
+    }).join('') + `
+      <div class="cs-portrait cs-vacante" style="--portrait-color:rgba(255,255,255,.1);">
+        <div class="cs-vacante-inner">
+          <div class="cs-vacante-icon">+</div>
+          <div class="cs-vacante-label">VACANTE</div>
+        </div>
+      </div>`;
+
 }
 
 function pvHover(name, color) {
@@ -3126,7 +3273,8 @@ function pvHover(name, color) {
   const nameEl = document.getElementById('pv-hero-name');
   if (nameEl) { nameEl.textContent = nick; nameEl.style.color = color; }
   const lvlEl = document.getElementById('pv-hero-level');
-  if (lvlEl) lvlEl.textContent = (r.level || '') + (d.active_count != null ? ` · ${d.active_count} ACTIVAS` : '');
+  const isAdmin = document.body.classList.contains('mode-admin');
+  if (lvlEl) lvlEl.textContent = (isAdmin && r.level ? r.level + ' · ' : '') + (d.active_count != null ? `${d.active_count} ACTIVAS` : '');
   const starsEl = document.getElementById('pv-hero-stars');
   if (starsEl && _authMode === 'admin') {
     starsEl.textContent = r.stars ? '★'.repeat(r.stars) + (r.half?'½':'') : '';
@@ -3181,7 +3329,7 @@ function toggleSound(btn) {
 
 // ─── PANEL DE DISPONIBLES ─────────────────────────────────────────────────
 function updateAvailablePanel(designers) {
-  const FREE_MAX = 3; // ≤ 3 tareas = disponible
+  const FREE_MAX = 2; // ≤ 2 tareas = disponible
   const free = designers.filter(d => d.active_count <= FREE_MAX);
   const panel = document.getElementById('available-panel');
   const chips = document.getElementById('available-chips');
@@ -3566,8 +3714,8 @@ function startCardPulseLoop() {
 
 // ─── DESIGNER MODAL ──────────────────────────────────────────────────────
 function openDesigner(idx, e) {
-  // Don't trigger if clicking on task items
-  if (e && e.target.closest('.task-list')) return;
+  // Don't trigger if clicking on task items or show-more button
+  if (e && e.target.closest('.task-item, .show-more')) return;
   sfxOpen();
 
   const d = allDesigners[idx];
@@ -3794,12 +3942,9 @@ function renderCard(designer, idx, visibleTasks) {
       + (more>0?`<button class="show-more" onclick="expandCard(${idx}, event)">▼ +${more} TAREAS MÁS</button>`:'');
 
   return `<div class="card-tilt-wrap" id="card-${idx}" style="--cc:${color};animation-delay:${idx * 50}ms">
-  <div class="card" data-semaforo="${sem.key}" ${overloadAttr}>
-    ${overloadBadge}
-    <div class="card-shine"></div>
 
-    <!-- FOTO / AVATAR — parte superior full-width -->
-    <div class="card-photo" onclick="openDesigner(${idx}, event)">
+    <!-- FOTO flotante — desborda por arriba del card -->
+    <div class="card-float-photo" onclick="openDesigner(${idx}, event)">
       <div id="cv-${idx}" class="card-photo-inner"></div>
       <div class="card-watermark">${firstName}</div>
       <div class="card-photo-gradient"></div>
@@ -3808,6 +3953,12 @@ function renderCard(designer, idx, visibleTasks) {
         <span class="status-badge ${bclass}">${badge}</span>
       </div>
     </div>
+
+  <div class="card" data-semaforo="${sem.key}" ${overloadAttr}>
+    ${overloadBadge}
+    <div class="card-shine"></div>
+    <div class="card-specular"></div>
+    <div class="card-rim"></div>
 
     <!-- INFO — debajo de la foto -->
     <div class="card-body" onclick="openDesigner(${idx}, event)">
@@ -3848,10 +3999,8 @@ function expandCard(idx, e) {
 
 // ─── FILTER / GRID ────────────────────────────────────────────────────────
 // ─── FILTER CONTROLS ─────────────────────────────────────────────────────
-function setFilter(f,btn) {
-  currentFilter=f;
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');
+function setFilter(f, btn) {
+  currentFilter = f;
   renderGrid();
 }
 
@@ -3870,8 +4019,6 @@ function clearSearch() {
 
 function setEstado(e, btn) {
   filterEstado = e;
-  document.querySelectorAll('.estado-chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');
   renderGrid();
 }
 
@@ -3906,12 +4053,14 @@ function buildClienteDropdown(designers) {
 
   const menu = document.getElementById('dd-marca-menu');
   // Conservar el ítem TODOS y si el filterMarca actual ya no existe, resetear
-  menu.innerHTML = `<div class="px-dropdown-item${!filterMarca ? ' selected' : ''}" onclick="pickMarca('', this)">TODOS</div>`;
+  menu.innerHTML = `<div class="px-dropdown-item${!filterMarca ? ' selected' : ''}" data-val="">TODOS</div>`;
   clientes.forEach(c => {
     const isSelected = filterMarca && filterMarca.toLowerCase() === c.toLowerCase();
-    menu.insertAdjacentHTML('beforeend',
-      `<div class="px-dropdown-item${isSelected ? ' selected' : ''}" onclick="pickMarca(${JSON.stringify(c)}, this)">${c}</div>`
-    );
+    const item = document.createElement('div');
+    item.className = 'px-dropdown-item' + (isSelected ? ' selected' : '');
+    item.textContent = c;
+    item.dataset.val = c;
+    menu.appendChild(item);
   });
 
   // Si el cliente filtrado ya no existe en los datos, resetear
@@ -3930,8 +4079,70 @@ function pickMarca(val, el) {
   renderGrid();
 }
 
-// cerrar dropdown al click fuera
+// cerrar dropdown al click fuera; manejar selección de items
+// ─── PIXEL CURSOR ─────────────────────────────────────────────────────────
+(function initPixelCursor() {
+  // SVG pixel-art arrow: 24×32 (12×16 dots × 2px each), cyan fill + dark outline
+  const B = '%230a0520', P = '%2300e5ff';
+  const r = (x,y,w,h,c) => `%3Crect x='${x}' y='${y}' width='${w}' height='${h}' fill='${c}'/%3E`;
+  const rects = [
+    // dark outline
+    r(0,0,2,2,B), r(0,2,4,2,B),
+    r(0,4,2,2,B), r(4,4,2,2,B),
+    r(0,6,2,2,B), r(6,6,2,2,B),
+    r(0,8,2,2,B), r(8,8,2,2,B),
+    r(0,10,2,2,B), r(10,10,2,2,B),
+    r(0,12,2,2,B), r(12,12,2,2,B),
+    r(0,14,2,2,B), r(14,14,2,2,B),
+    r(0,16,2,2,B), r(16,16,2,2,B),
+    r(0,18,2,2,B), r(18,18,2,2,B),
+    r(0,20,2,2,B), r(14,20,2,2,B),
+    r(0,22,2,2,B), r(6,22,2,2,B), r(16,22,2,2,B),
+    r(0,24,2,2,B), r(4,24,2,2,B), r(18,24,2,2,B),
+    r(0,26,4,2,B), r(20,26,2,2,B),
+    r(22,28,2,2,B), r(22,30,2,2,B),
+    // cyan fill
+    r(2,4,2,2,P),
+    r(2,6,4,2,P),
+    r(2,8,6,2,P),
+    r(2,10,8,2,P),
+    r(2,12,10,2,P),
+    r(2,14,12,2,P),
+    r(2,16,14,2,P),
+    r(2,18,16,2,P),
+    r(2,20,12,2,P),
+    r(2,22,4,2,P), r(12,22,4,2,P),
+    r(2,24,2,2,P), r(14,24,4,2,P),
+    r(16,26,4,2,P),
+    r(18,28,4,2,P),
+    r(20,30,2,2,P),
+  ].join('');
+  const svg = `data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' width='24' height='32'%3E${rects}%3C/svg%3E`;
+  const style = document.createElement('style');
+  style.textContent = `html { cursor: url("${svg}") 0 0, auto !important; }`;
+  document.head.appendChild(style);
+})();
+
+// ─── CLICK SPARK ──────────────────────────────────────────────────────────
 document.addEventListener('click', e => {
+  if (e.target.closest('#login-overlay,#main-menu,#char-select')) return;
+  const sparks = ['✦','✧','◆','·','★'];
+  const el = document.createElement('div');
+  el.className = 'cursor-spark';
+  el.style.left = e.clientX + 'px';
+  el.style.top  = e.clientY + 'px';
+  el.textContent = sparks[Math.floor(Math.random() * sparks.length)];
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 500);
+}, true);
+
+document.addEventListener('click', e => {
+  const item = e.target.closest('.px-dropdown-item');
+  if (item) {
+    if (item.hasAttribute('data-val'))    { pickMarca(item.dataset.val, item);   return; }
+    if (item.hasAttribute('data-estado')) { setEstado(item.dataset.estado, item); return; }
+    if (item.hasAttribute('data-filtro')) { setFilter(item.dataset.filtro, item); return; }
+  }
   if (!e.target.closest('.px-dropdown')) {
     document.querySelectorAll('.px-dropdown.open').forEach(d => d.classList.remove('open'));
   }
@@ -3939,8 +4150,8 @@ document.addEventListener('click', e => {
 
 function setSort(s, btn) {
   sortBy = s;
-  document.querySelectorAll('.sort-chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');
+  document.querySelectorAll('.fd-sort-btn, .sort-chip').forEach(c=>c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
   renderGrid();
 }
 
@@ -4209,12 +4420,14 @@ function setMetricsPeriod(period, btn) {
   loadMetrics();
 }
 
+function toggleFilterDrawer() { /* drawer removed */ }
+
 function switchView(view, btn) {
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.h-nav-btn').forEach(t => t.classList.remove('active'));
   // btn puede no existir si viene de launchApp — buscar el tab correspondiente
   if (!btn) {
     const map = { dashboard: 0, metrics: 1, settings: 2 };
-    const tabs = document.querySelectorAll('.nav-tab');
+    const tabs = document.querySelectorAll('.h-nav-btn');
     btn = tabs[map[view] ?? 0];
   }
   if (btn) btn.classList.add('active');
@@ -4222,6 +4435,15 @@ function switchView(view, btn) {
   document.getElementById('dashboard-view').classList.toggle('hidden', view !== 'dashboard');
   document.getElementById('metrics-view').classList.toggle('visible', view === 'metrics');
   document.getElementById('settings-view').classList.toggle('visible', view === 'settings');
+
+  // Controles de filtro solo visibles en dashboard
+  const dash = view === 'dashboard';
+  const ctrl = document.getElementById('h-dash-controls');
+  if (ctrl) ctrl.style.display = dash ? 'contents' : 'none';
+  const panel = document.getElementById('available-panel');
+  if (panel) panel.style.setProperty('display', dash ? '' : 'none', 'important');
+  const toggle = document.getElementById('grid-view-switch');
+  if (toggle) toggle.closest('div[style]').style.display = dash ? '' : 'none';
 
   if (view === 'metrics'  && !metricsLoaded) loadMetrics();
   if (view === 'settings') renderSettings();
@@ -4273,7 +4495,12 @@ function renderSettings() {
 
     return `<div class="settings-card" id="sc-${i}">
       <div class="settings-card-head">
-        <div id="scv-${i}" style="width:40px;height:54px;flex-shrink:0;border:2px solid ${d.color}44;overflow:hidden;position:relative;background:#0a0a1a"></div>
+        <div id="scv-${i}" style="width:54px;height:72px;flex-shrink:0;border:2px solid ${d.color||'#444'};overflow:hidden;position:relative;background:#0a0a1a;border-radius:6px">
+          <img src="${csAvatarPath(nick)}" alt="${nick}"
+            style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-family:'Press Start 2P',monospace;font-size:10px;color:${d.color||'#888'}">${nick.slice(0,2).toUpperCase()}</div>
+        </div>
         <div style="flex:1;min-width:0">
           <div class="settings-card-name">${nick}</div>
           <div class="settings-card-role">${(d.title||'DISEÑADOR').toUpperCase()}</div>
@@ -4686,13 +4913,13 @@ function renderDonut(estados) {
 }
 
 // ─── 3D TILT EFFECT ──────────────────────────────────────────────────────
-const TILT_MAX   = 8;     // grados máximos de rotación
-const PERSPECTIVE = 900;  // perspectiva en px — más alto = más sutil
-const SCALE_HOVER = 1.03;
+const TILT_MAX   = 14;    // grados máximos de rotación
+const PERSPECTIVE = 700;  // perspectiva en px — más bajo = más dramático
+const SCALE_HOVER = 1.06;
 
 function resetTiltLayers(wrap) {
   const easing = 'transform .65s cubic-bezier(0.23,1,0.32,1)';
-  ['.card-photo-inner','.card-hero-name','.nivel-badge','.task-header','.status-badge']
+  ['.card-photo-inner','.card-hero-name','.nivel-badge','.task-header','.status-badge','.bar-fill']
     .forEach(sel => {
       const el = wrap.querySelector(sel);
       if (!el) return;
@@ -4704,14 +4931,19 @@ function resetTiltLayers(wrap) {
 function initCardTilt() {
   document.querySelectorAll('.card-tilt-wrap:not([data-tilt])').forEach(wrap => {
     wrap.setAttribute('data-tilt', '1');
-    const card  = wrap.querySelector('.card');
-    const shine = wrap.querySelector('.card-shine');
+    const card     = wrap.querySelector('.card');
+    const shine    = wrap.querySelector('.card-shine');
+    const specular = wrap.querySelector('.card-specular');
+    const rim      = wrap.querySelector('.card-rim');
     let raf = null;
 
+    // Pre-read card color once on enter (avoids reflow in mousemove)
+    let cardColor = '#00e5ff';
     wrap.addEventListener('mouseenter', () => {
       wrap.style.transition = 'none';
       card.style.transition = 'box-shadow .15s ease';
-      ['.card-photo-inner','.card-hero-name','.nivel-badge','.task-header','.status-badge']
+      cardColor = getComputedStyle(card).getPropertyValue('--cc').trim() || '#00e5ff';
+      ['.card-photo-inner','.card-hero-name','.nivel-badge','.task-header','.status-badge','.bar-fill']
         .forEach(sel => {
           const el = wrap.querySelector(sel);
           if (el) el.style.transition = 'none';
@@ -4721,56 +4953,98 @@ function initCardTilt() {
     wrap.addEventListener('mousemove', (e) => {
       if (raf) cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        const rect = wrap.getBoundingClientRect();
+        const rect  = wrap.getBoundingClientRect();
+        const cRect = card.getBoundingClientRect(); // coordenadas relativas al .card
         const x  = e.clientX - rect.left;
         const y  = e.clientY - rect.top;
+        // coordenadas dentro del .card (para specular/rim que tienen overflow:hidden)
+        const cx = e.clientX - cRect.left;
+        const cy = e.clientY - cRect.top;
         const nx = (x / rect.width)  * 2 - 1;   // -1 → 1
         const ny = (y / rect.height) * 2 - 1;   // -1 → 1
         const tiltX = -ny * TILT_MAX;
         const tiltY =  nx * TILT_MAX;
+        const mag   = Math.sqrt(nx*nx + ny*ny);  // 0 → ~1.41
 
-        // ── Wrapper: rotación 3D real sin restricciones ──
+        // ── Wrapper: rotación 3D ──
         wrap.style.transform =
           `perspective(${PERSPECTIVE}px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(${SCALE_HOVER},${SCALE_HOVER},${SCALE_HOVER})`;
 
-        // ── Capa 1: foto — se mueve menos (plano lejano) ──
+        // ── Foto: plano más lejano, escala dramática según inclinación ──
         const photo = wrap.querySelector('.card-photo-inner');
+        const img   = photo && photo.querySelector('img.avatar-photo');
         if (photo) {
           photo.style.transition = 'none';
-          photo.style.transform = `translate(${nx * -3}px, ${ny * -2}px) scale(1.04)`;
+          photo.style.transform = `translate(${nx * -8}px, ${ny * -5}px)`;
+        }
+        if (img) {
+          const photoScale = 1.08 + mag * 0.18;  // 1.08 en centro → ~1.33 en esquina
+          img.style.transition = 'none';
+          img.style.transform = `scale(${photoScale})`;
+          img.style.filter = `contrast(${1.12 + mag*0.1}) saturate(${1.5 + mag*0.3}) brightness(${1.05 + mag*0.1})`;
         }
 
+        // ── Capas de parallax: nombre, badge, tareas ──
         const name    = wrap.querySelector('.card-hero-name');
         const badge   = wrap.querySelector('.nivel-badge');
         const taskH   = wrap.querySelector('.task-header');
         const statusB = wrap.querySelector('.status-badge');
+        const barFill = wrap.querySelector('.bar-fill');
 
-        if (name)    { name.style.transition='none';    name.style.transform=`translate(${nx*5}px,${ny*3}px)`; }
-        if (badge)   { badge.style.transition='none';   badge.style.transform=`translate(${nx*7}px,${ny*4}px)`; }
-        if (taskH)   { taskH.style.transition='none';   taskH.style.transform=`translate(${nx*4}px,${ny*2}px)`; }
-        if (statusB) { statusB.style.transition='none'; statusB.style.transform=`translate(${nx*-6}px,${ny*-4}px)`; }
+        if (name)    { name.style.transition='none';    name.style.transform=`translate(${nx*8}px,${ny*5}px)`; }
+        if (badge)   { badge.style.transition='none';   badge.style.transform=`translate(${nx*10}px,${ny*6}px)`; }
+        if (taskH)   { taskH.style.transition='none';   taskH.style.transform=`translate(${nx*6}px,${ny*3}px)`; }
+        if (statusB) { statusB.style.transition='none'; statusB.style.transform=`translate(${nx*-9}px,${ny*-6}px)`; }
+        if (barFill) { barFill.style.transition='none'; barFill.style.transform=`translateX(${nx*4}px)`; }
 
-        // ── Sombra dinámica — sigue la dirección del tilt ──
-        const shadowX = tiltY * 1.2;
-        const shadowY = -tiltX * 1.2;
+        // ── Sombra dinámica ──
+        const shadowX = tiltY * 1.4;
+        const shadowY = -tiltX * 1.4;
         card.style.boxShadow = `
-          inset 3px 3px 0 rgba(255,255,255,.32),
-          inset -3px -3px 0 rgba(0,0,0,.7),
-          ${shadowX}px ${shadowY}px 0 rgba(0,0,0,.95),
-          ${shadowX*1.8}px ${shadowY*1.8}px 20px rgba(0,0,0,.5),
-          0 0 50px color-mix(in srgb, var(--cc,transparent) 60%, transparent),
-          0 0 100px color-mix(in srgb, var(--cc,transparent) 28%, transparent)
+          inset 3px 3px 0 rgba(255,255,255,.35),
+          inset -3px -3px 0 rgba(0,0,0,.75),
+          ${shadowX}px ${shadowY}px 0 rgba(0,0,0,1),
+          ${shadowX*2}px ${shadowY*2}px 24px rgba(0,0,0,.55),
+          0 0 60px color-mix(in srgb, var(--cc,transparent) 65%, transparent),
+          0 0 120px color-mix(in srgb, var(--cc,transparent) 32%, transparent)
         `;
 
-        // ── Shine highlight más fuerte ──
+        // Luz — espejo del cursor dentro del card
+        const lightX = ((-nx * .5 + .5)) * cRect.width;
+        const lightY = ((-ny * .5 + .5)) * cRect.height;
+
+        // ── Shine difusa — luz suave tipo ambiente (dentro del card) ──
         if (shine) {
-          const lightX = (1 - (nx * .5 + .5)) * rect.width;
-          const lightY = (1 - (ny * .5 + .5)) * rect.height;
           shine.style.background = `
-            radial-gradient(circle at ${lightX}px ${lightY}px,
-              rgba(255,255,255,.22) 0%,
-              rgba(255,255,255,.05) 40%,
-              transparent 65%)
+            radial-gradient(ellipse 80% 60% at ${lightX}px ${lightY}px,
+              rgba(255,255,255,.20) 0%,
+              rgba(255,255,255,.05) 50%,
+              transparent 70%)
+          `;
+        }
+
+        // ── Specular — destello nítido en posición del cursor dentro del card ──
+        if (specular) {
+          specular.style.background = `
+            radial-gradient(circle at ${cx}px ${cy}px,
+              rgba(255,255,255,.80) 0%,
+              rgba(255,255,255,.30) 5%,
+              rgba(255,255,255,.06) 15%,
+              transparent 26%),
+            radial-gradient(ellipse 60% 45% at ${lightX}px ${lightY}px,
+              rgba(255,255,255,.14) 0%,
+              transparent 55%)
+          `;
+        }
+
+        // ── Rim light — glow de color en borde del card ──
+        if (rim) {
+          rim.style.background = `
+            radial-gradient(ellipse 95% 95% at ${lightX}px ${lightY}px,
+              transparent 50%,
+              color-mix(in srgb, ${cardColor} 35%, transparent) 72%,
+              color-mix(in srgb, ${cardColor} 15%, transparent) 88%,
+              transparent 100%)
           `;
         }
       });
@@ -4781,7 +5055,12 @@ function initCardTilt() {
       wrap.style.transition = 'transform .7s cubic-bezier(0.23,1,0.32,1)';
       wrap.style.transform  = `perspective(${PERSPECTIVE}px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)`;
       card.style.boxShadow  = '';
-      if (shine) shine.style.background = 'none';
+      if (shine)    shine.style.background    = 'none';
+      if (specular) specular.style.background = 'none';
+      if (rim)      rim.style.background      = 'none';
+      // Restore photo filter
+      const img = wrap.querySelector('img.avatar-photo');
+      if (img) { img.style.transition = 'transform .4s cubic-bezier(0.23,1,0.32,1), filter .3s ease'; img.style.transform = ''; img.style.filter = ''; }
       resetTiltLayers(wrap);
     });
 

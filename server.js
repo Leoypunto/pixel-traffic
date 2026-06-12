@@ -81,6 +81,22 @@ app.use('/api', (req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// Ruta para limpiar SW y caché del browser — visitar una vez para forzar actualización
+app.get('/clear-cache', (req, res) => {
+  res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Clearing cache...</title></head><body>
+<script>
+(async () => {
+  const regs = await navigator.serviceWorker.getRegistrations();
+  for (const r of regs) await r.unregister();
+  const keys = await caches.keys();
+  for (const k of keys) await caches.delete(k);
+  window.location.replace('/');
+})();
+</script>
+<p style="font-family:monospace;padding:20px">Limpiando caché... redirigiendo</p>
+</body></html>`);
+});
+
 // ─── Helper: today as YYYY-MM-DD ─────────────────────────────────────────────
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
