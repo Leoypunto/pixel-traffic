@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_20", "python3", "gnumake", "gcc", "chromium", "nss", "freetype", "harfbuzz", "cacert"]
+nixPkgs = ["nodejs_20", "python3", "gnumake", "gcc", "chromium", "nss", "freetype", "harfbuzz"]
 
 [phases.install]
 cmds = ["npm ci --omit=dev"]
