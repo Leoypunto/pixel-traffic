@@ -47,6 +47,8 @@ function requireAuth(req, res, next) {
 }
 
 // Login endpoint (público, sin auth)
+app.get('/health', (req, res) => res.json({ ok: true }));
+
 app.post('/api/auth', express.json(), (req, res) => {
   const { password, mode, designer } = req.body || {};
 
