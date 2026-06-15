@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs_22", "python3", "gnumake", "gcc", "chromium", "nss", "freetype", "harfbuzz"]
 
 [phases.install]
-cmds = ["npm ci --omit=dev"]
+cmds = ["PUPPETEER_SKIP_DOWNLOAD=1 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1 npm ci --omit=dev"]
 
 [variables]
 PUPPETEER_SKIP_DOWNLOAD = "1"
