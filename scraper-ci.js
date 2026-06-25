@@ -107,12 +107,16 @@ async function run() {
     console.log(`✓ ${tasks.length} tareas extraídas`);
 
     // Enviar a Railway
+    console.log(`→ POST ${RAILWAY_URL}/api/import`);
     const res = await fetch(`${RAILWAY_URL}/api/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ secret: SECRET, tasks }),
     });
-    const json = await res.json();
+    const text = await res.text();
+    console.log(`← HTTP ${res.status}: ${text.slice(0, 300)}`);
+    let json;
+    try { json = JSON.parse(text); } catch { console.error('❌ No es JSON válido'); process.exit(1); }
     console.log(`✓ Railway respondió:`, json);
 
     if (!res.ok) process.exit(1);
