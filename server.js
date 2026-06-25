@@ -82,7 +82,7 @@ app.use('/api', (req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Ruta para limpiar SW y caché del browser — visitar una vez para forzar actualización
 app.get('/clear-cache', (req, res) => {
