@@ -466,6 +466,26 @@ app.put('/api/designers/:name/skills', express.json(), (req, res) => {
   res.json({ ok: true, skills: updated });
 });
 
+// ─── API: Import tasks from external scraper (GitHub Actions) ────────────────
+app.post('/api/import', express.json({ limit: '10mb' }), (req, res) => {
+  const { secret, tasks } = req.body || {};
+  if (secret !== (process.env.IMPORT_SECRET || 'import2026')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (!Array.isArray(tasks) || tasks.length === 0) {
+    return res.status(400).json({ error: 'No tasks provided' });
+  }
+  const now = new Date().toISOString();
+  let saved = 0;
+  for (const task of tasks) {
+    try { queries.insertTask.run({ ...task, scraped_at: now }); saved++; } catch {}
+  }
+  const dedup = queries.deduplicateTasks.run();
+  queries.logSync.run({ synced_at: now, status: 'ok', tasks_found: tasks.length, error: null });
+  console.log(`[Import] ${saved} tareas importadas, ${dedup.changes} duplicados eliminados`);
+  res.json({ ok: true, saved, deduped: dedup.changes });
+});
+
 // ─── API: Manual refresh ─────────────────────────────────────────────────────
 app.post('/api/refresh', async (req, res) => {
   res.json({ ok: true, message: 'Scrape iniciado en background' });

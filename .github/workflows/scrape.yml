@@ -1,0 +1,32 @@
+name: Scrape & Sync
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # cada hora
+  workflow_dispatch:        # también manual desde GitHub UI
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --omit=dev
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: '1'
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: '1'
+
+      - name: Scrape & push to Railway
+        run: node scraper-ci.js
+        env:
+          DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
+          DASHBOARD_EMAIL: ${{ secrets.DASHBOARD_EMAIL }}
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
+          RAILWAY_URL: ${{ secrets.RAILWAY_URL }}
+          IMPORT_SECRET: ${{ secrets.IMPORT_SECRET }}
