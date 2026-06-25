@@ -74,9 +74,10 @@ app.post('/api/auth', express.json(), (req, res) => {
   res.status(401).json({ ok: false, error: 'Contraseña incorrecta' });
 });
 
-// Todas las rutas /api/* requieren token, excepto /api/auth
+// Todas las rutas /api/* requieren token, excepto /api/auth e /api/import
 app.use('/api', (req, res, next) => {
   if (req.path === '/auth' && req.method === 'POST') return next();
+  if (req.path === '/import' && req.method === 'POST') return next();
   requireAuth(req, res, next);
 });
 
