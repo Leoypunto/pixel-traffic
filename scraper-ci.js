@@ -8,6 +8,15 @@ const PASSWORD     = process.env.DASHBOARD_PASSWORD;
 const RAILWAY_URL  = process.env.RAILWAY_URL || 'https://pixel-traffic-production.up.railway.app';
 const SECRET       = process.env.IMPORT_SECRET || 'import2026';
 
+// Solo estos son diseñadores — filtramos cualquier otro nombre extraído
+const DESIGNERS = new Set([
+  'Leo Castro','Jonathan Fajardo','Yamileth Batista','Ramiro González',
+  'Cristian Delgado','Marcela Sánchez','Miguel Díaz','Luis Wong',
+  'Jonathan Barrelier','Ana Turner','Paula Lobo','Eduardo Rolla',
+  'Julio Mejía','Arturo Atencio','Jesús Ortega','Aris Alain',
+  'Mariel Marengo','Alexander Caballero','Robin De León',
+]);
+
 function findChromium() {
   const candidates = ['google-chrome-stable', 'google-chrome', 'chromium-browser', 'chromium'];
   for (const c of candidates) {
@@ -104,14 +113,15 @@ async function run() {
       return result;
     });
 
-    console.log(`✓ ${tasks.length} tareas extraídas`);
+    const filtered = tasks.filter(t => DESIGNERS.has(t.designer_name));
+    console.log(`✓ ${tasks.length} tareas extraídas → ${filtered.length} de diseñadores conocidos`);
 
     // Enviar a Railway
     console.log(`→ POST ${RAILWAY_URL}/api/import`);
     const res = await fetch(`${RAILWAY_URL}/api/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: SECRET, tasks }),
+      body: JSON.stringify({ secret: SECRET, tasks: filtered }),
     });
     const text = await res.text();
     console.log(`← HTTP ${res.status}: ${text.slice(0, 300)}`);
