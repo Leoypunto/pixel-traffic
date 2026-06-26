@@ -504,4 +504,25 @@ app.listen(PORT, () => {
   console.log(`🎮 Pixel Traffic → http://localhost:${PORT}`);
   const stats = queries.getStats.get();
   console.log(`📊 ${stats.total_designers} diseñadores, ${stats.total_tasks} tareas en DB`);
+
+  // Si el DB arrancó vacío (deploy fresco), auto-dispara el scraper de GitHub Actions
+  if (stats.total_tasks === 0 && process.env.GH_TOKEN) {
+    console.log('🔄 DB vacío — disparando scraper automáticamente...');
+    const https = require('https');
+    const body = JSON.stringify({ ref: 'main' });
+    const req = https.request({
+      hostname: 'api.github.com',
+      path: '/repos/Leoypunto/pixel-traffic/actions/workflows/scrape.yml/dispatches',
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${process.env.GH_TOKEN}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'pixel-traffic-server',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, res => console.log(`🔄 Scraper disparado: HTTP ${res.statusCode}`));
+    req.on('error', e => console.error('🔄 Error al disparar scraper:', e.message));
+    req.write(body);
+    req.end();
+  }
 });
