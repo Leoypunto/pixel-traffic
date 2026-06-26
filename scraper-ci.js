@@ -113,6 +113,14 @@ async function run() {
       return result;
     });
 
+    // Log breakdown por nombre (antes de filtrar)
+    const byName = {};
+    for (const t of tasks) byName[t.designer_name] = (byName[t.designer_name] || 0) + 1;
+    const sorted = Object.entries(byName).sort((a,b) => b[1]-a[1]);
+    console.log('── Nombres extraídos del Studio ──');
+    for (const [n, c] of sorted) console.log(`  ${c.toString().padStart(3)}  ${n}`);
+    console.log('──────────────────────────────────');
+
     const filtered = tasks.filter(t => DESIGNERS.has(t.designer_name));
     console.log(`✓ ${tasks.length} tareas extraídas → ${filtered.length} de diseñadores conocidos`);
 
