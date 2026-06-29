@@ -909,6 +909,7 @@
       padding-top: 70px;
       transition: transform .1s ease;
       transform-style: preserve-3d;
+      cursor: pointer;
     }
     /* CSS tilt fallback — JS override en mousemove */
     .card-tilt-wrap:hover {
@@ -1058,9 +1059,7 @@
       z-index: 5;
       background: transparent; /* sin fondo — solo el personaje */
       cursor: pointer;
-      pointer-events: none; /* el click lo maneja el card-body debajo */
     }
-    .card-float-photo .card-photo-overlay { pointer-events: auto; }
     .card-float-photo .card-photo-gradient { display:none; } /* sin gradiente — el fondo queda en el card */
     /* card-photo legacy (ya no se usa como sección) */
     .card-photo { display:none; }
@@ -3941,10 +3940,10 @@ function renderCard(designer, idx, visibleTasks) {
     : tasks.slice(0,VISIBLE).map(t=>taskHtml(t,color,searchQuery)).join('')
       + (more>0?`<button class="show-more" onclick="expandCard(${idx}, event)">▼ +${more} TAREAS MÁS</button>`:'');
 
-  return `<div class="card-tilt-wrap" id="card-${idx}" style="--cc:${color};animation-delay:${idx * 50}ms">
+  return `<div class="card-tilt-wrap" id="card-${idx}" style="--cc:${color};animation-delay:${idx * 50}ms" onclick="openDesigner(${idx}, event)">
 
     <!-- FOTO flotante — desborda por arriba del card -->
-    <div class="card-float-photo" onclick="openDesigner(${idx}, event)">
+    <div class="card-float-photo">
       <div id="cv-${idx}" class="card-photo-inner"></div>
       <div class="card-watermark">${firstName}</div>
       <div class="card-photo-gradient"></div>
@@ -3961,7 +3960,7 @@ function renderCard(designer, idx, visibleTasks) {
     <div class="card-rim"></div>
 
     <!-- INFO — debajo de la foto -->
-    <div class="card-body" onclick="openDesigner(${idx}, event)">
+    <div class="card-body">
       <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;">
         <div class="card-hero-name">${firstName}</div>
         <span class="nivel-badge ${nClass}" style="flex-shrink:0">${levelLabel}</span>
