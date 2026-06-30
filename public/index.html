@@ -1958,6 +1958,27 @@
     }
     .modal-bc-btn.disabled { color:var(--dim); border-color:var(--border); background:none; pointer-events:none; opacity:.5; }
 
+    /* ── Modal complete button ───────────────────── */
+    .modal-complete-btn {
+      font-family:'Press Start 2P',monospace; font-size:7px; letter-spacing:1px;
+      padding:9px 14px; border:2px solid rgba(0,255,128,.35);
+      background:rgba(0,255,128,.07); color:var(--green);
+      cursor:pointer; transition:all .15s; flex-shrink:0;
+    }
+    .modal-complete-btn:hover { background:rgba(0,255,128,.18); border-color:var(--green); box-shadow:0 0 12px rgba(0,255,128,.3); }
+    .modal-complete-btn.is-done {
+      background:rgba(0,255,128,.2); border-color:var(--green);
+      color:var(--green); box-shadow:0 0 10px rgba(0,255,128,.25);
+    }
+    body.day-theme .modal-complete-btn { border-color:rgba(0,180,80,.3); background:rgba(0,180,80,.06); color:#1a8a44; }
+    body.day-theme .modal-complete-btn.is-done { background:rgba(0,180,80,.15); border-color:#1a8a44; }
+
+    /* ── COMPLETED animation ─────────────────────── */
+    @keyframes compIn  { 0%{transform:translate(-50%,-50%) scale(0) rotate(-8deg);opacity:0} 60%{transform:translate(-50%,-50%) scale(1.15) rotate(2deg);opacity:1} 80%{transform:translate(-50%,-50%) scale(.95) rotate(-1deg)} 100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);opacity:1} }
+    @keyframes compOut { 0%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.4)} }
+    @keyframes pixFloat { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-180px) rotate(720deg);opacity:0} }
+    @keyframes scanline { 0%{top:-4px} 100%{top:100%} }
+
     /* ─── DESIGNER DETAIL MODAL ───────────────────────────────────── */
     .dmodal-box {
       background:var(--panel); border:2px solid var(--border);
@@ -3805,11 +3826,20 @@
         <div class="modal-proyecto" id="tm-proyecto">—</div>
       </div>
 
-      <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <div style="display:flex; gap:10px; justify-content:flex-end; align-items:center;">
+        <button class="modal-complete-btn" id="tm-complete-btn" onclick="toggleModalCheck()">
+          <span id="tm-complete-icon">■</span> <span id="tm-complete-label">MARCAR COMPLETADA</span>
+        </button>
         <a class="modal-bc-btn" id="tm-bc-btn" href="#" target="_blank">⬡ ABRIR EN BASECAMP</a>
       </div>
     </div>
   </div>
+</div>
+
+<!-- COMPLETED overlay animation -->
+<div id="completed-overlay" style="display:none; position:fixed; inset:0; z-index:9999; pointer-events:none; overflow:hidden;">
+  <div id="completed-text" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); font-family:'Press Start 2P',monospace; font-size:clamp(24px,5vw,56px); color:#0ff; text-shadow:0 0 20px #0ff, 0 0 40px #0ff, 4px 4px 0 #006; letter-spacing:4px; white-space:nowrap; text-align:center; line-height:1.4;"></div>
+  <div id="completed-pixels" style="position:absolute; inset:0;"></div>
 </div>
 
 <script>
@@ -4616,10 +4646,18 @@ function skillPanelHtml(skills) {
 }
 
 // ─── TASK MODAL ──────────────────────────────────────────────────────────
+let _currentModalTid = null;
 function openTask(t, color) {
+  _currentModalTid = String(t.id || t.external_id || '');
   const overlay = document.getElementById('task-modal');
   document.getElementById('task-modal-bar').style.background = color || 'var(--blue)';
   document.getElementById('task-modal-box').style.setProperty('--tm-color', color || 'var(--blue)');
+  // sync check button state
+  const isDone = !!globalChecked[_currentModalTid];
+  const btn = document.getElementById('tm-complete-btn');
+  btn.classList.toggle('is-done', isDone);
+  document.getElementById('tm-complete-icon').textContent = isDone ? '✓' : '■';
+  document.getElementById('tm-complete-label').textContent = isDone ? 'COMPLETADA ✓' : 'MARCAR COMPLETADA';
   document.getElementById('tm-title').textContent = t.title || '(sin título)';
 
   const set = (id, v, fallback='—') => {
@@ -4876,7 +4914,6 @@ function renderDTasks() {
     const tid = t.id || key;
     const chk = globalChecked[tid] || false;
     return `<div class="dtask-item${chk?' task-checked':''}" data-tid="${tid}" onclick="openTaskByKey('${key}')">
-      <button class="dtask-check-btn" title="Marcar" onclick="event.stopPropagation();toggleGlobalCheck('${tid}',this.closest('.dtask-item'))">${chk?'✓':''}</button>
       <span class="dtask-bullet">${isDone ? '✓' : '▶'}</span>
       <div class="dtask-body">
         <div class="dtask-title ${isDone?'dtask-status-done':''}">${t.title || '(sin título)'}</div>
@@ -4900,7 +4937,6 @@ function taskHtml(t, color, query) {
   const tid = t.id || key;
   const chk = globalChecked[tid] || false;
   return `<div class="task-item${query?' task-match':''}${chk?' task-checked':''}" data-tid="${tid}" onclick="openTaskByKey('${key}')">
-    <button class="task-check-btn" title="Marcar" onclick="event.stopPropagation();toggleGlobalCheck('${tid}',this.closest('.task-item'))">${chk?'✓':''}</button>
     <span class="task-bullet">▶</span>
     <div class="task-body">
       <div class="task-title" title="${(t.title||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}">${title}</div>
@@ -6651,11 +6687,86 @@ let globalChecked = JSON.parse(localStorage.getItem('pt_checked') || '{}');
 function toggleGlobalCheck(tid, el) {
   globalChecked[tid] = !globalChecked[tid];
   localStorage.setItem('pt_checked', JSON.stringify(globalChecked));
-  if (!el) return;
   const chk = globalChecked[tid];
-  el.classList.toggle('task-checked', chk);
-  const btn = el.querySelector('.task-check-btn, .dtask-check-btn');
-  if (btn) btn.textContent = chk ? '✓' : '';
+  // update all cards with this tid
+  document.querySelectorAll(`[data-tid="${tid}"]`).forEach(card => {
+    card.classList.toggle('task-checked', chk);
+  });
+  // sync modal button if open
+  if (_currentModalTid === String(tid)) {
+    const btn = document.getElementById('tm-complete-btn');
+    if (btn) {
+      btn.classList.toggle('is-done', chk);
+      document.getElementById('tm-complete-icon').textContent = chk ? '✓' : '■';
+      document.getElementById('tm-complete-label').textContent = chk ? 'COMPLETADA ✓' : 'MARCAR COMPLETADA';
+    }
+  }
+}
+
+function toggleModalCheck() {
+  if (!_currentModalTid) return;
+  const wasChecked = !!globalChecked[_currentModalTid];
+  const nowChecked = !wasChecked;
+  globalChecked[_currentModalTid] = nowChecked;
+  localStorage.setItem('pt_checked', JSON.stringify(globalChecked));
+  // update cards
+  document.querySelectorAll(`[data-tid="${_currentModalTid}"]`).forEach(card => {
+    card.classList.toggle('task-checked', nowChecked);
+  });
+  // update modal button
+  const btn = document.getElementById('tm-complete-btn');
+  btn.classList.toggle('is-done', nowChecked);
+  document.getElementById('tm-complete-icon').textContent = nowChecked ? '✓' : '■';
+  document.getElementById('tm-complete-label').textContent = nowChecked ? 'COMPLETADA ✓' : 'MARCAR COMPLETADA';
+  // play animation only when marking done
+  if (nowChecked) playCompletedAnim();
+}
+
+function playCompletedAnim() {
+  const overlay = document.getElementById('completed-overlay');
+  const textEl  = document.getElementById('completed-text');
+  const pixelsEl= document.getElementById('completed-pixels');
+
+  textEl.innerHTML = 'MISSION<br>COMPLETE!';
+  overlay.style.display = 'block';
+
+  // spawn pixel confetti
+  pixelsEl.innerHTML = '';
+  const colors = ['#0ff','#ff0','#0f0','#f0f','#fff','#f80'];
+  for (let i = 0; i < 40; i++) {
+    const px = document.createElement('div');
+    const size = 6 + Math.random() * 10;
+    px.style.cssText = `
+      position:absolute;
+      width:${size}px; height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:${10+Math.random()*80}%;
+      bottom:${20+Math.random()*30}%;
+      animation: pixFloat ${0.8+Math.random()*1.2}s ease-out ${Math.random()*0.4}s forwards;
+      image-rendering:pixelated;
+    `;
+    pixelsEl.appendChild(px);
+  }
+
+  // scanline effect
+  const scan = document.createElement('div');
+  scan.style.cssText = `position:absolute;left:0;right:0;height:4px;background:rgba(0,255,255,.15);animation:scanline .6s linear 3;`;
+  pixelsEl.appendChild(scan);
+
+  // text in
+  textEl.style.animation = 'none';
+  textEl.offsetHeight; // reflow
+  textEl.style.animation = 'compIn .5s cubic-bezier(.17,.67,.33,1.3) forwards';
+
+  // out after 1.8s
+  setTimeout(() => {
+    textEl.style.animation = 'compOut .4s ease-in forwards';
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      pixelsEl.innerHTML = '';
+      textEl.style.animation = '';
+    }, 400);
+  }, 1800);
 }
 
 // ── Designer panel check state ────────────────────────────────────────────
