@@ -191,6 +191,24 @@ db.transaction(() => {
   for (const d of titlesData) updateTitle.run(d.title, d.name);
 })();
 
+// ─── Comments table ──────────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS comments (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    author     TEXT NOT NULL,
+    text       TEXT NOT NULL,
+    anonymous  INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  );
+`);
+
+// ─── Migration: add anonymous column to comments if missing ──────────────────
+try {
+  db.prepare('SELECT anonymous FROM comments LIMIT 1').get();
+} catch (e) {
+  db.exec('ALTER TABLE comments ADD COLUMN anonymous INTEGER NOT NULL DEFAULT 0');
+}
+
 // Queries
 const queries = {
   getAllDesigners: db.prepare('SELECT * FROM designers WHERE active = 1 ORDER BY name'),
@@ -240,6 +258,11 @@ const queries = {
   `),
 
   getLastSync: db.prepare('SELECT * FROM sync_log ORDER BY id DESC LIMIT 1'),
+
+  insertComment: db.prepare(`
+    INSERT INTO comments (author, text, anonymous, created_at) VALUES (?, ?, ?, ?)
+  `),
+  getAllComments: db.prepare(`SELECT * FROM comments ORDER BY created_at DESC`),
 
   getStats: db.prepare(`
     SELECT

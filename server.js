@@ -493,6 +493,65 @@ app.post('/api/refresh', async (req, res) => {
   scrape().then(r => console.log('[Refresh]', r));
 });
 
+// ─── SSE: comments real-time stream ──────────────────────────────────────────
+const commentClients = new Set();
+
+app.get('/api/comments/stream', (req, res) => {
+  const raw = req.headers['x-token'] || req.query._t;
+  const payload = verifyToken(raw);
+  if (!payload || !['admin','general'].includes(payload.mode)) {
+    return res.status(401).end();
+  }
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  res.write('event: connected\ndata: ok\n\n');
+  const heartbeat = setInterval(() => res.write(': ping\n\n'), 25000);
+  commentClients.add(res);
+  req.on('close', () => { commentClients.delete(res); clearInterval(heartbeat); });
+});
+
+function broadcastComment(comment) {
+  const data = `event: comment\ndata: ${JSON.stringify(comment)}\n\n`;
+  for (const client of commentClients) {
+    try { client.write(data); } catch {}
+  }
+}
+
+// ─── API: Comments ────────────────────────────────────────────────────────────
+// POST — solo diseñadores pueden enviar
+app.post('/api/comments', express.json(), (req, res) => {
+  const raw = req.headers['x-token'] || req.query._t;
+  const payload = verifyToken(raw);
+  if (!payload || payload.mode !== 'designer') {
+    return res.status(401).json({ error: 'Solo diseñadores pueden enviar sugerencias' });
+  }
+  const text = (req.body?.text || '').trim();
+  const anon = req.body?.anonymous ? 1 : 0;
+  if (!text || text.length > 2000) return res.status(400).json({ error: 'Texto inválido' });
+  const now = new Date().toISOString();
+  const info = queries.insertComment.run(payload.designer, text, anon, now);
+  const displayAuthor = anon ? 'Anónimo' : payload.designer;
+  const comment = { id: info.lastInsertRowid, author: displayAuthor, text, anonymous: anon, created_at: now };
+  broadcastComment(comment);
+  res.json({ ok: true, comment });
+});
+
+// GET — admin y general pueden leer
+app.get('/api/comments', (req, res) => {
+  const raw = req.headers['x-token'] || req.query._t;
+  const payload = verifyToken(raw);
+  if (!payload || !['admin','general'].includes(payload.mode)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const rows = queries.getAllComments.all().map(c => ({
+    ...c,
+    author: c.anonymous ? 'Anónimo' : c.author,
+  }));
+  res.json(rows);
+});
+
 // ─── Cron: auto-refresh every 15 min, Mon-Fri 8am-6pm ───────────────────────
 cron.schedule('*/15 8-18 * * 1-5', () => {
   console.log('[Cron] Auto-refresh...');
