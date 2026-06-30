@@ -2269,11 +2269,316 @@
     body.day-theme .login-mode-btn { background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.15); }
     body.day-theme .login-designer-select { background:#f8f4ff; color:var(--text); border-color:var(--border); }
     body.day-theme .gv-btn.active { background:rgba(180,110,0,.12); }
+
+    /* ─── MY PANEL — Vista personal del diseñador ───────────────────────── */
+    #my-panel {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+      background: var(--bg);
+      --mp-color: #ffcc00;
+      position: relative;
+    }
+    #my-panel.mp-active { display: flex; }
+
+    /* Header */
+    .mp-hdr {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 18px 28px;
+      background: rgba(0,0,0,.35);
+      border-bottom: 2px solid var(--border);
+      flex-wrap: wrap;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .mp-hdr-avatar {
+      width: 64px; height: 64px;
+      border-radius: 12px;
+      border: 2px solid var(--mp-color);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--mp-color) 60%, transparent);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: rgba(0,0,0,.5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mp-hdr-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .mp-hdr-info { flex: 1; }
+    .mp-hdr-name {
+      font-family: 'VT323', monospace;
+      font-size: clamp(26px, 4vw, 42px);
+      color: var(--mp-color);
+      text-shadow: 0 0 20px color-mix(in srgb, var(--mp-color) 60%, transparent);
+      line-height: 1; margin-bottom: 3px;
+    }
+    .mp-hdr-level {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px; color: var(--dim); letter-spacing: 2px;
+    }
+    .mp-hdr-stats {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .mp-stat {
+      background: rgba(0,0,0,.45);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 18px;
+      text-align: center;
+      min-width: 70px;
+    }
+    .mp-stat-num {
+      font-family: 'VT323', monospace;
+      font-size: 32px;
+      color: var(--mp-color);
+      line-height: 1;
+    }
+    .mp-stat-lbl {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 5px; color: var(--dim); letter-spacing: 1px;
+      margin-top: 3px;
+    }
+    .mp-stat.mp-stat-active .mp-stat-num { color: var(--green); }
+    .mp-stat.mp-stat-done .mp-stat-num   { color: var(--dim); }
+    .mp-hdr-actions {
+      display: flex; gap: 8px; align-items: center; margin-left: auto;
+    }
+    .mp-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px; padding: 8px 14px;
+      background: rgba(0,0,0,.4);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--dim); cursor: pointer;
+      transition: all .15s; letter-spacing: 1px;
+    }
+    .mp-btn:hover { color: var(--text); border-color: var(--mp-color); box-shadow: 0 0 10px color-mix(in srgb, var(--mp-color) 40%, transparent); }
+    .mp-btn.mp-btn-logout { color: var(--red); border-color: rgba(255,60,60,.3); }
+    .mp-btn.mp-btn-logout:hover { background: rgba(255,60,60,.1); border-color: var(--red); box-shadow: 0 0 10px rgba(255,60,60,.3); }
+    .mp-btn.mp-btn-refresh:hover { color: var(--green); }
+
+    /* Date nav */
+    .mp-date-nav {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 28px;
+      background: rgba(0,0,0,.2);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .mp-date-label {
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: var(--gold); letter-spacing: 2px; flex: 1;
+    }
+    .mp-date-btn {
+      font-family: 'Press Start 2P', monospace; font-size: 8px;
+      background: rgba(0,0,0,.4); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      padding: 7px 13px; cursor: pointer; transition: all .15s;
+    }
+    .mp-date-btn:hover { border-color: var(--mp-color); color: var(--mp-color); }
+    .mp-date-btn.mp-today { border-color: var(--gold); color: var(--gold); font-size: 6px; }
+    .mp-date-btn.mp-today:hover { background: rgba(255,204,0,.1); }
+    .mp-alltime-btn {
+      font-family: 'Press Start 2P', monospace; font-size: 6px;
+      background: rgba(0,0,0,.4); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--dim);
+      padding: 7px 12px; cursor: pointer; transition: all .15s;
+    }
+    .mp-alltime-btn.active { border-color: var(--orange); color: var(--orange); background: rgba(255,136,0,.08); }
+    .mp-alltime-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* Content area */
+    .mp-body {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 0;
+      flex: 1;
+    }
+    @media (max-width: 900px) { .mp-body { grid-template-columns: 1fr; } }
+
+    /* Tasks column */
+    .mp-tasks-col {
+      padding: 20px 28px;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+    }
+    .mp-section-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px; color: var(--dim);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 10px; margin-top: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .mp-section-title:first-child { margin-top: 0; }
+    .mp-section-count {
+      font-family: 'VT323', monospace; font-size: 16px;
+      color: var(--mp-color);
+      background: color-mix(in srgb, var(--mp-color) 15%, transparent);
+      border-radius: 20px; padding: 1px 8px;
+    }
+    .mp-task-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      transition: border-color .15s, background .15s;
+      cursor: pointer;
+    }
+    .mp-task-item:hover { border-color: var(--mp-color); background: rgba(0,0,0,.4); }
+    .mp-task-item.done { opacity: .6; }
+    .mp-task-item.done:hover { opacity: .85; }
+    .mp-task-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0; margin-top: 4px;
+      box-shadow: 0 0 6px var(--green);
+    }
+    .mp-task-dot.done { background: var(--dim); box-shadow: none; }
+    .mp-task-body { flex: 1; min-width: 0; }
+    .mp-task-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px; color: var(--text);
+      line-height: 1.6; margin-bottom: 6px;
+      word-break: break-word;
+    }
+    .mp-task-title.done { color: var(--dim); text-decoration: line-through; }
+    .mp-task-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .mp-tag {
+      font-family: 'Press Start 2P', monospace; font-size: 5px;
+      padding: 3px 7px; border-radius: 6px; letter-spacing: .5px;
+    }
+    .mp-tag-client { background: rgba(0,170,255,.15); color: #00aaff; border: 1px solid rgba(0,170,255,.25); }
+    .mp-tag-type   { background: rgba(255,204,0,.1);  color: var(--gold); border: 1px solid rgba(255,204,0,.2); }
+    .mp-tag-date   { background: rgba(255,100,100,.1); color: var(--red);  border: 1px solid rgba(255,100,100,.2); }
+    .mp-empty {
+      font-family: 'Press Start 2P', monospace; font-size: 7px;
+      color: var(--dim); text-align: center; padding: 40px 20px;
+      border: 1px dashed var(--border); border-radius: 10px;
+      line-height: 2;
+    }
+
+    /* Sidebar: clients + stats */
+    .mp-sidebar {
+      padding: 20px 20px;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .mp-sidebar-card {
+      background: rgba(0,0,0,.25);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .mp-sidebar-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6.5px; color: var(--gold);
+      letter-spacing: 2px; margin-bottom: 14px;
+    }
+    .mp-client-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .mp-client-name {
+      font-family: 'VT323', monospace; font-size: 15px;
+      color: var(--text); min-width: 90px; max-width: 90px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .mp-client-bar-wrap {
+      flex: 1; height: 6px; background: rgba(255,255,255,.07);
+      border-radius: 4px; overflow: hidden;
+    }
+    .mp-client-bar {
+      height: 100%; border-radius: 4px;
+      background: var(--mp-color);
+      transition: width .5s ease;
+    }
+    .mp-client-count {
+      font-family: 'VT323', monospace; font-size: 14px;
+      color: var(--dim); min-width: 24px; text-align: right;
+    }
+    .mp-mini-stat-row {
+      display: flex; gap: 8px;
+    }
+    .mp-mini-stat {
+      flex: 1; background: rgba(0,0,0,.3);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 8px; text-align: center;
+    }
+    .mp-mini-stat-num {
+      font-family: 'VT323', monospace; font-size: 26px;
+      color: var(--mp-color); line-height: 1;
+    }
+    .mp-mini-stat-lbl {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 4.5px; color: var(--dim); letter-spacing: .5px; margin-top: 3px;
+    }
+    .mp-loading {
+      font-family: 'Press Start 2P', monospace; font-size: 7px;
+      color: var(--dim); text-align: center; padding: 60px;
+      animation: blink 1s steps(1) infinite;
+    }
+
+    /* Day-theme overrides */
+    body.day-theme #my-panel { background: var(--bg); }
+    body.day-theme .mp-hdr,
+    body.day-theme .mp-date-nav { background: rgba(255,255,255,.5); }
+    body.day-theme .mp-task-item { background: rgba(255,255,255,.5); }
+    body.day-theme .mp-sidebar-card { background: rgba(255,255,255,.5); }
+    body.day-theme .mp-mini-stat { background: rgba(255,255,255,.3); }
   </style>
 </head>
 <body>
 <div class="scanline-sweep"></div>
 <div id="screen-flash-container"></div>
+
+<!-- ═══ MY PANEL — Vista personal del diseñador ═════════════════════════ -->
+<div id="my-panel">
+  <!-- Header -->
+  <div class="mp-hdr">
+    <div class="mp-hdr-avatar" id="mp-avatar"></div>
+    <div class="mp-hdr-info">
+      <div class="mp-hdr-name" id="mp-name">—</div>
+      <div class="mp-hdr-level" id="mp-level">—</div>
+    </div>
+    <div class="mp-hdr-stats" id="mp-stats">
+      <div class="mp-stat mp-stat-active">
+        <div class="mp-stat-num" id="mp-active">—</div>
+        <div class="mp-stat-lbl">ACTIVAS</div>
+      </div>
+      <div class="mp-stat mp-stat-done">
+        <div class="mp-stat-num" id="mp-done">—</div>
+        <div class="mp-stat-lbl">COMPLETADAS</div>
+      </div>
+      <div class="mp-stat">
+        <div class="mp-stat-num" id="mp-total">—</div>
+        <div class="mp-stat-lbl">TOTAL HOY</div>
+      </div>
+    </div>
+    <div class="mp-hdr-actions">
+      <button class="mp-btn mp-btn-refresh" onclick="mpRefresh()">↻ SYNC</button>
+      <button class="mp-btn mp-btn-logout" onclick="doLogout()">⏻ SALIR</button>
+    </div>
+  </div>
+
+  <!-- Date nav -->
+  <div class="mp-date-nav">
+    <button class="mp-date-btn" onclick="mpChangeDate(-1)">◀</button>
+    <div class="mp-date-label" id="mp-date-label">—</div>
+    <button class="mp-date-btn" onclick="mpChangeDate(1)">▶</button>
+    <button class="mp-date-btn mp-today" onclick="mpGoToday()">HOY</button>
+    <button class="mp-alltime-btn" id="mp-alltime-btn" onclick="mpToggleAllTime()">TODO EL TIEMPO</button>
+  </div>
+
+  <!-- Body: tasks + sidebar -->
+  <div class="mp-body">
+    <div class="mp-tasks-col" id="mp-tasks-col">
+      <div class="mp-loading">CARGANDO...</div>
+    </div>
+    <div class="mp-sidebar" id="mp-sidebar">
+      <div class="mp-loading">...</div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ LOGIN OVERLAY ════════════════════════════════════════════════════ -->
 <div id="login-overlay">
@@ -2853,6 +3158,9 @@ function doLogout() {
   localStorage.removeItem('pt-mode');
   localStorage.removeItem('pt-designer');
   _authToken = ''; _authMode = ''; _authDesigner = '';
+  // Ocultar my-panel si estaba visible
+  const panel = document.getElementById('my-panel');
+  if (panel) { panel.classList.remove('mp-active'); panel.style.display = ''; }
   // Reset body classes
   document.body.className = document.body.className
     .replace(/mode-\S+/g,'').replace(/view-\S+/g,'').trim();
@@ -2865,12 +3173,14 @@ function doLogout() {
   const overlay = document.getElementById('login-overlay');
   overlay.style.opacity = '1';
   overlay.style.display = 'flex';
-  // Go back to menu
-  document.getElementById('main-menu').style.display = '';
-  document.getElementById('main-menu').style.opacity  = '1';
-  ['header','#app-content','#settings-view','#metrics-view'].forEach(s=>{
-    document.querySelector(s)?.style && (document.querySelector(s).style.display = '');
+  // Restaurar UI normal (header, views)
+  const hdr = document.querySelector('header');
+  if (hdr) hdr.style.display = '';
+  ['dashboard-view','metrics-view','settings-view'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = '';
   });
+  document.getElementById('main-menu').style.display  = '';
+  document.getElementById('main-menu').style.opacity  = '1';
 }
 
 async function checkAuth() {
@@ -3123,12 +3433,17 @@ function applyMode(mode, designer) {
     if (logoutBtn) logoutBtn.style.display = '';
   }
 
-  // Designer mode: enforce dashboard-only view
-  if (mode === 'designer' || mode === 'general') {
+  // Designer mode: mostrar Mi Panel personal (skip dashboard normal)
+  if (mode === 'designer' && designer) {
+    showMyPanel(designer);
+    return;
+  }
+
+  // General mode: enforce dashboard-only view
+  if (mode === 'general') {
     const activeTab = document.querySelector('.h-nav-btn.active');
-    const onHiddenView = activeTab && (activeTab.id === 'nav-tab-settings' ||
-      (mode === 'designer' && activeTab.id === 'nav-tab-metrics'));
-    if (onHiddenView) switchView('dashboard', document.querySelector('.h-nav-btn:first-child'));
+    if (activeTab && activeTab.id === 'nav-tab-settings')
+      switchView('dashboard', document.querySelector('.h-nav-btn:first-child'));
   }
 }
 
@@ -5350,6 +5665,214 @@ function launchApp(section = 'dashboard') {
 document.addEventListener('DOMContentLoaded', initMenuStarfield);
 // Also run immediately in case DOMContentLoaded already fired
 if (document.readyState !== 'loading') initMenuStarfield();
+
+// ─── MY PANEL — Vista personal del diseñador ─────────────────────────────────
+let mpDate         = new Date().toISOString().slice(0, 10);
+let mpAllTime      = false;
+let mpDesignerName = '';
+
+function mpTodayStr() { return new Date().toISOString().slice(0, 10); }
+
+async function showMyPanel(name) {
+  // Ocultar toda la UI normal
+  document.getElementById('main-menu').style.display     = 'none';
+  document.getElementById('loading').style.display       = 'none';
+  const hdr = document.querySelector('header');
+  if (hdr) hdr.style.display = 'none';
+  ['dashboard-view','metrics-view','settings-view','available-panel','personajes-view']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+
+  // Mostrar panel
+  const panel = document.getElementById('my-panel');
+  panel.classList.add('mp-active');
+
+  // Resolver entrada del roster
+  const r = CS_ROSTER.find(x => x.name === name) || {};
+  const color = r.color || '#ffcc00';
+  panel.style.setProperty('--mp-color', color);
+
+  // Header estático: nombre, nivel, avatar
+  document.getElementById('mp-name').textContent  = r.nick || name.split(' ')[0].toUpperCase();
+  document.getElementById('mp-level').textContent = `${name.toUpperCase()} · ${r.level || ''}`;
+  const avatarEl = document.getElementById('mp-avatar');
+  avatarEl.innerHTML = '';
+  const img = new Image();
+  img.src = csAvatarPath(r.nick || name.split(' ')[0]);
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:top;';
+  img.onerror = () => {
+    avatarEl.innerHTML = `<div style="font-family:'VT323',monospace;font-size:28px;color:${color};">${(r.nick||name).slice(0,2).toUpperCase()}</div>`;
+  };
+  avatarEl.appendChild(img);
+
+  mpDesignerName = name;
+  mpDate    = mpTodayStr();
+  mpAllTime = false;
+  document.getElementById('mp-alltime-btn').classList.remove('active');
+  await loadMyPanelData();
+}
+
+async function loadMyPanelData() {
+  const name = mpDesignerName || _authDesigner;
+  const tasksCol = document.getElementById('mp-tasks-col');
+  const sidebar  = document.getElementById('mp-sidebar');
+  tasksCol.innerHTML = '<div class="mp-loading">CARGANDO...</div>';
+  sidebar.innerHTML  = '<div class="mp-loading">...</div>';
+
+  try {
+    const qs = mpAllTime ? 'all=true' : `date=${mpDate}`;
+    const [dayRes, allRes] = await Promise.all([
+      apiFetch(`/api/designers?${qs}`),
+      apiFetch(`/api/tasks?designer=${encodeURIComponent(name)}&all=true`),
+    ]);
+    const designers = await dayRes.json();
+    const allTasks  = await allRes.json();
+    const d = designers.find(x => x.name === name) || { tasks:[], active_tasks:[], completed_tasks:[] };
+
+    // Stats en header
+    document.getElementById('mp-active').textContent = d.active_count    ?? d.active_tasks?.length    ?? 0;
+    document.getElementById('mp-done').textContent   = d.completed_count ?? d.completed_tasks?.length ?? 0;
+    document.getElementById('mp-total').textContent  = d.tasks?.length   ?? 0;
+
+    // Label de fecha
+    const label = mpAllTime
+      ? 'TODO EL TIEMPO'
+      : (mpDate === mpTodayStr() ? `HOY · ${fmtDisplayDate(mpDate)}` : fmtDisplayDate(mpDate));
+    document.getElementById('mp-date-label').textContent = label;
+
+    renderMpTasks(d.tasks || []);
+    renderMpSidebar(allTasks);
+  } catch(e) {
+    tasksCol.innerHTML = '<div class="mp-loading" style="color:var(--red)">ERROR CARGANDO DATOS</div>';
+  }
+}
+
+function renderMpTasks(tasks) {
+  const col = document.getElementById('mp-tasks-col');
+  const active    = tasks.filter(t => t.status !== 'completed' && t.status !== 'archived');
+  const completed = tasks.filter(t => t.status === 'completed');
+
+  let html = '';
+
+  if (active.length === 0 && completed.length === 0) {
+    const msg = mpAllTime ? 'SIN TAREAS REGISTRADAS' : 'SIN TAREAS PARA ESTE DÍA';
+    col.innerHTML = `<div class="mp-empty">● ${msg}<br><br>¡DÍA LIBRE!</div>`;
+    return;
+  }
+
+  if (active.length) {
+    html += `<div class="mp-section-title">● EN PROGRESO <span class="mp-section-count">${active.length}</span></div>`;
+    html += active.map(t => mpTaskHtml(t, false)).join('');
+  }
+
+  if (completed.length) {
+    html += `<div class="mp-section-title">✓ COMPLETADAS <span class="mp-section-count">${completed.length}</span></div>`;
+    html += completed.map(t => mpTaskHtml(t, true)).join('');
+  }
+
+  col.innerHTML = html;
+}
+
+function mpTaskHtml(t, done) {
+  const title   = t.title || '(sin título)';
+  const cliente = val(t.cliente) || val(t.marca) || '';
+  const tipo    = val(t.tipo)    || '';
+  const fechaFin = val(t.fecha_fin) || val(t.order_date) || '';
+
+  const tags = [
+    cliente  ? `<span class="mp-tag mp-tag-client">${cliente}</span>` : '',
+    tipo     ? `<span class="mp-tag mp-tag-type">${tipo}</span>`      : '',
+    fechaFin ? `<span class="mp-tag mp-tag-date">📅 ${fmtDate(fechaFin)}</span>` : '',
+  ].filter(Boolean).join('');
+
+  return `
+  <div class="mp-task-item${done?' done':''}" onclick="openDesignerTask(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+    <div class="mp-task-dot${done?' done':''}"></div>
+    <div class="mp-task-body">
+      <div class="mp-task-title${done?' done':''}">${title}</div>
+      ${tags ? `<div class="mp-task-tags">${tags}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function openDesignerTask(t) {
+  // Reutiliza el task modal existente
+  if (typeof openTaskModal === 'function') openTaskModal(t);
+}
+
+function renderMpSidebar(allTasks) {
+  const sidebar = document.getElementById('mp-sidebar');
+
+  // Clientes (all-time)
+  const clientMap = {};
+  allTasks.forEach(t => {
+    const c = val(t.cliente) || val(t.marca);
+    if (c) clientMap[c] = (clientMap[c] || 0) + 1;
+  });
+  const clients = Object.entries(clientMap).sort((a,b) => b[1]-a[1]).slice(0, 10);
+  const maxCount = clients[0]?.[1] || 1;
+
+  // Stats all-time
+  const totalAll  = allTasks.length;
+  const activeAll = allTasks.filter(t => t.status !== 'completed' && t.status !== 'archived').length;
+  const doneAll   = allTasks.filter(t => t.status === 'completed').length;
+
+  sidebar.innerHTML = `
+    <div class="mp-sidebar-card">
+      <div class="mp-sidebar-title">◆ CARGA TOTAL</div>
+      <div class="mp-mini-stat-row">
+        <div class="mp-mini-stat">
+          <div class="mp-mini-stat-num" style="color:var(--green)">${activeAll}</div>
+          <div class="mp-mini-stat-lbl">ACTIVAS</div>
+        </div>
+        <div class="mp-mini-stat">
+          <div class="mp-mini-stat-num" style="color:var(--dim)">${doneAll}</div>
+          <div class="mp-mini-stat-lbl">HECHAS</div>
+        </div>
+        <div class="mp-mini-stat">
+          <div class="mp-mini-stat-num">${totalAll}</div>
+          <div class="mp-mini-stat-lbl">TOTAL</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mp-sidebar-card">
+      <div class="mp-sidebar-title">◆ MIS CLIENTES</div>
+      ${clients.length ? clients.map(([name, count]) => `
+        <div class="mp-client-row">
+          <div class="mp-client-name" title="${name}">${name}</div>
+          <div class="mp-client-bar-wrap">
+            <div class="mp-client-bar" style="width:${Math.round(count/maxCount*100)}%"></div>
+          </div>
+          <div class="mp-client-count">${count}</div>
+        </div>`).join('')
+      : '<div style="font-family:\'Press Start 2P\',monospace;font-size:6px;color:var(--dim);padding:10px 0">SIN DATOS</div>'}
+    </div>`;
+}
+
+function mpChangeDate(offset) {
+  if (mpAllTime) return;
+  const d = new Date(mpDate + 'T12:00:00');
+  d.setDate(d.getDate() + offset);
+  mpDate = d.toISOString().slice(0, 10);
+  loadMyPanelData();
+}
+
+function mpGoToday() {
+  mpAllTime = false;
+  document.getElementById('mp-alltime-btn').classList.remove('active');
+  mpDate = mpTodayStr();
+  loadMyPanelData();
+}
+
+function mpToggleAllTime() {
+  mpAllTime = !mpAllTime;
+  document.getElementById('mp-alltime-btn').classList.toggle('active', mpAllTime);
+  loadMyPanelData();
+}
+
+async function mpRefresh() {
+  await loadMyPanelData();
+}
 
 // ─── SERVICE WORKER (PWA) ─────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
