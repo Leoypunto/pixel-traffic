@@ -3237,6 +3237,9 @@
     .h-nav { display: none !important; }  /* se reemplaza con bottom nav */
     .pixel-btn { font-size: 6px; padding: 5px 8px; }
     .theme-btn, #audio-btn { width: 36px; height: 36px; font-size: 13px; }
+    /* Search bar: expand to fill available space on mobile */
+    .search-input-wrap { flex: 1 1 0; min-width: 0; max-width: none; }
+    .search-input { width: 100%; }
 
     /* ── Bottom nav bar (admin/general) ── */
     .mobile-bottom-nav {
@@ -3256,7 +3259,7 @@
       transition: color .15s; padding: 0; letter-spacing: .5px;
       border-top: 2px solid transparent;
     }
-    .mobile-nav-btn .mnav-icon { font-size: 16px; line-height: 1; }
+    .mobile-nav-btn .mnav-icon { font-size: 14px; line-height: 1; font-style: normal; }
     .mobile-nav-btn.active { color: var(--gold); border-top-color: var(--gold); }
     .mobile-nav-btn .notif-dot {
       position: absolute; top: 6px; right: calc(50% - 14px);
@@ -3782,16 +3785,16 @@
 <!-- Mobile bottom nav (visible solo en mobile vía CSS) -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none">
   <button class="mobile-nav-btn active" id="mnav-dashboard" onclick="switchView('dashboard',null);mnavActivate('mnav-dashboard')">
-    <span class="mnav-icon">📊</span>TABLERO
+    <span class="mnav-icon">▦</span>TABLERO
   </button>
   <button class="mobile-nav-btn" id="mnav-metrics" onclick="switchView('metrics',null);mnavActivate('mnav-metrics')" style="display:none">
-    <span class="mnav-icon">📈</span>MÉTRICAS
+    <span class="mnav-icon">◈</span>MÉTRICAS
   </button>
   <button class="mobile-nav-btn" id="mnav-buzon" onclick="switchView('buzon',null);mnavActivate('mnav-buzon')" style="display:none">
-    <span class="mnav-icon" style="position:relative">📬<span class="notif-dot" id="mnav-buzon-dot" style="display:none"></span></span>BUZÓN
+    <span class="mnav-icon" style="position:relative">✉<span class="notif-dot" id="mnav-buzon-dot" style="display:none"></span></span>BUZÓN
   </button>
   <button class="mobile-nav-btn" id="mnav-settings" onclick="switchView('settings',null);mnavActivate('mnav-settings')" style="display:none">
-    <span class="mnav-icon">⚙️</span>CONFIG
+    <span class="mnav-icon">◎</span>CONFIG
   </button>
 </nav>
 
