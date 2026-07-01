@@ -3238,6 +3238,7 @@
       <div class="mp-char-actions">
         <button class="mp-action-btn mp-action-sync" onclick="mpRefresh()" title="Sync">↻</button>
         <button class="mp-action-btn mp-action-theme" onclick="toggleTheme()" title="Tema" id="mp-theme-btn">🌙</button>
+        <button class="mp-action-btn mp-action-audio" onclick="SFX.toggleMute();this.textContent=SFX.isMuted()?'🔇':'🔊'" title="Audio" id="mp-audio-btn">🔊</button>
         <button class="mp-action-btn mp-action-logout" onclick="doLogout()" title="Salir">⏻</button>
       </div>
       <div class="mp-char-info">
@@ -3584,6 +3585,7 @@
   <!-- Mode + auth + theme + sync -->
   <div class="mode-chip chip-admin" id="mode-chip" style="display:none"></div>
   <button class="logout-btn" id="logout-btn" onclick="doLogout()" style="display:none">✕ SALIR</button>
+  <button class="theme-btn" id="audio-btn" onclick="SFX.toggleMute();document.getElementById('audio-btn').textContent=SFX.isMuted()?'🔇':'🔊'" title="Audio">🔊</button>
   <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
   <div class="sync-status"><div class="dot" id="sync-dot"></div><span id="sync-text">—</span></div>
   <button class="pixel-btn" onclick="refresh()">⟳ SYNC</button>
@@ -4194,10 +4196,14 @@ function applyMode(mode, designer) {
 
   // Designer mode: mostrar Mi Panel personal (skip dashboard normal)
   if (mode === 'designer' && designer) {
+    SFX.login();
+    setTimeout(() => SFX.startBgm(), 900);
     showMyPanel(designer);
     return;
   }
 
+  SFX.login();
+  setTimeout(() => SFX.startBgm(), 900);
   // Show BUZÓN tab for admin and general; start SSE
   const buzonTab = document.getElementById('nav-tab-buzon');
   if (buzonTab) buzonTab.style.display = (mode === 'admin' || mode === 'general') ? '' : 'none';
@@ -4640,6 +4646,7 @@ function skillPanelHtml(skills) {
 // ─── TASK MODAL ──────────────────────────────────────────────────────────
 let _currentModalTid = null;
 function openTask(t, color) {
+  SFX.modalOpen();
   _currentModalTid = String(t.id || t.external_id || '');
   const overlay = document.getElementById('task-modal');
   document.getElementById('task-modal-bar').style.background = color || 'var(--blue)';
@@ -4689,6 +4696,7 @@ function openTask(t, color) {
 
 function closeTaskModal(e) {
   if (e && e.target !== document.getElementById('task-modal')) return;
+  SFX.modalClose();
   document.getElementById('task-modal').classList.remove('open');
   document.body.style.overflow = '';
 }
@@ -5516,6 +5524,7 @@ function setMetricsPeriod(period, btn) {
 function toggleFilterDrawer() { /* drawer removed */ }
 
 function switchView(view, btn) {
+  SFX.swipe();
   document.querySelectorAll('.h-nav-btn').forEach(t => t.classList.remove('active'));
   if (!btn) {
     const map = { dashboard: 0, metrics: 1, buzon: 2, settings: 3 };
@@ -6714,6 +6723,7 @@ function toggleModalCheck() {
 }
 
 function playCompletedAnim() {
+  SFX.missionComplete();
   const overlay = document.getElementById('completed-overlay');
   const textEl  = document.getElementById('completed-text');
   const pixelsEl= document.getElementById('completed-pixels');
@@ -6814,6 +6824,7 @@ function initMpDrag() {
     dragSrc = item;
     item.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
+    SFX.dragStart();
   });
   container.addEventListener('dragend', e => {
     document.querySelectorAll('.mp-mission').forEach(el => {
@@ -6847,6 +6858,7 @@ function initMpDrag() {
 let mpAnon = false;
 function toggleAnon() {
   mpAnon = !mpAnon;
+  SFX.toggleSound();
   document.getElementById('mp-anon-toggle').classList.toggle('on', mpAnon);
 }
 
@@ -6863,6 +6875,7 @@ async function sendSugerencia() {
   if (!text) return;
 
   btn.disabled = true;
+  SFX.mailSend();
 
   // 1. Door opens
   if (door) door.style.animation = 'mbDoorOpen .3s ease-in both';
@@ -6972,6 +6985,7 @@ function addBuzonComment(comment) {
 }
 
 function showBuzonNotif(comment) {
+  SFX.notification();
   buzonUnread++;
   const badge = document.getElementById('buzon-badge');
   if (badge) { badge.textContent = buzonUnread; badge.style.display = ''; }
@@ -7082,6 +7096,207 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
+
+// ─── 8-BIT AUDIO ENGINE ──────────────────────────────────────────────────────
+const SFX = (() => {
+  let _ctx = null, _master = null;
+  let _muted = localStorage.getItem('pt-muted') === '1';
+  let _bgmRunning = false, _bgmTimeout = null;
+
+  function ctx() {
+    if (!_ctx) {
+      _ctx = new (window.AudioContext || window.webkitAudioContext)();
+      _master = _ctx.createGain();
+      _master.gain.value = _muted ? 0 : 0.7;
+      _master.connect(_ctx.destination);
+    }
+    if (_ctx.state === 'suspended') _ctx.resume();
+    return _ctx;
+  }
+
+  function note(freq, t, dur, type='square', vol=0.25, slide=null) {
+    if (!freq || !_master) return;
+    const c = ctx();
+    const osc = c.createOscillator();
+    const g   = c.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (slide != null) osc.frequency.linearRampToValueAtTime(slide, t + dur);
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.008);
+    g.gain.setValueAtTime(vol, t + dur * 0.65);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(g); g.connect(_master);
+    osc.start(t); osc.stop(t + dur + 0.01);
+  }
+
+  // ── SFX ────────────────────────────────────────────────────────────────
+  function click() {
+    const c=ctx(), t=c.currentTime;
+    note(880, t,      0.04, 'square', 0.12);
+    note(660, t+0.03, 0.03, 'square', 0.08);
+  }
+
+  function modalOpen() {
+    const c=ctx(), t=c.currentTime;
+    note(523, t,       0.07, 'square', 0.18);
+    note(659, t+0.07,  0.07, 'square', 0.18);
+    note(784, t+0.14,  0.12, 'square', 0.22);
+  }
+
+  function modalClose() {
+    const c=ctx(), t=c.currentTime;
+    note(523, t,      0.06, 'square', 0.12);
+    note(392, t+0.05, 0.09, 'square', 0.09);
+  }
+
+  function missionComplete() {
+    const c=ctx(), t=c.currentTime;
+    // Fanfare melody
+    note(523, t,        0.10, 'square',   0.28);
+    note(523, t+0.11,   0.10, 'square',   0.28);
+    note(523, t+0.22,   0.10, 'square',   0.28);
+    note(784, t+0.33,   0.35, 'square',   0.35);
+    note(698, t+0.38,   0.08, 'square',   0.20);
+    note(659, t+0.48,   0.08, 'square',   0.20);
+    note(587, t+0.58,   0.08, 'square',   0.20);
+    note(784, t+0.72,   0.45, 'square',   0.40);
+    // Bass
+    note(131, t,        0.09, 'triangle', 0.18);
+    note(131, t+0.33,   0.18, 'triangle', 0.22);
+    note(98,  t+0.72,   0.40, 'triangle', 0.28);
+    // Sparkle highs
+    note(1047, t+0.40,  0.06, 'sine', 0.12);
+    note(1319, t+0.52,  0.06, 'sine', 0.12);
+    note(1568, t+0.64,  0.06, 'sine', 0.14);
+    note(2093, t+0.80,  0.18, 'sine', 0.18);
+  }
+
+  function mailSend() {
+    const c=ctx(), t=c.currentTime;
+    // whoosh
+    note(300, t,      0.15, 'sawtooth', 0.12, 1800);
+    // envelope flutter
+    note(800, t+0.08, 0.05, 'square',   0.08, 1200);
+    // ding-ding
+    note(1319,t+0.18, 0.22, 'sine',     0.18);
+    note(1047,t+0.30, 0.20, 'sine',     0.14);
+  }
+
+  function notification() {
+    const c=ctx(), t=c.currentTime;
+    note(880,  t,      0.09, 'sine', 0.18);
+    note(1109, t+0.10, 0.14, 'sine', 0.22);
+  }
+
+  function swipe() {
+    const c=ctx(), t=c.currentTime;
+    note(440, t, 0.07, 'sawtooth', 0.10, 880);
+  }
+
+  function toggleSound() {
+    const c=ctx(), t=c.currentTime;
+    note(440, t,      0.05, 'square', 0.14);
+    note(660, t+0.06, 0.05, 'square', 0.14);
+  }
+
+  function dragStart() {
+    const c=ctx(), t=c.currentTime;
+    note(330, t, 0.05, 'square', 0.10);
+  }
+
+  function login() {
+    const c=ctx(), t=c.currentTime;
+    [262,330,392,523,659,784,1047].forEach((f,i) => {
+      note(f, t+i*0.07, 0.10, 'square', 0.12+i*0.01);
+    });
+  }
+
+  function error() {
+    const c=ctx(), t=c.currentTime;
+    note(220, t,      0.12, 'sawtooth', 0.18);
+    note(196, t+0.13, 0.12, 'sawtooth', 0.18);
+    note(175, t+0.26, 0.18, 'sawtooth', 0.20);
+  }
+
+  // ── BGM ─────────────────────────────────────────────────────────────────
+  // Upbeat chiptune loop (~4.8s)
+  const _MEL = [
+    // Super Mario Bros-inspired original melody
+    [659,0.10],[0,0.05],[659,0.10],[0,0.10],[659,0.10],[0,0.10],[523,0.10],[659,0.10],
+    [784,0.20],[0,0.20],[392,0.20],[0,0.20],
+    [523,0.20],[0,0.15],[392,0.15],[0,0.10],[330,0.20],[0,0.10],
+    [440,0.12],[494,0.12],[466,0.10],[440,0.12],
+    [392,0.10],[659,0.12],[784,0.12],[880,0.15],
+    [698,0.10],[784,0.10],[0,0.05],[659,0.12],
+    [523,0.10],[587,0.08],[494,0.18],[0,0.10],
+    [523,0.20],[0,0.10],[392,0.15],[0,0.05],[330,0.20],[0,0.20],
+  ];
+  const _BASS = [
+    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[196,0.15],[0,0.10],
+    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[175,0.15],[0,0.10],
+    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[220,0.15],[0,0.10],
+    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[196,0.15],[0,0.10],
+    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[196,0.15],[0,0.10],
+    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[175,0.15],[0,0.10],
+    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[165,0.15],[0,0.10],
+    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[196,0.30],[0,0.10],
+  ];
+
+  function _scheduleBgm(startAt) {
+    if (!_bgmRunning) return;
+    const c = ctx();
+    let mt = startAt, bt = startAt, dur = 0;
+    for (const [f,d] of _MEL) {
+      if (f) note(f, mt, d*0.82, 'square', 0.10);
+      mt += d; dur += d;
+    }
+    for (const [f,d] of _BASS) {
+      if (f) note(f, bt, d*0.70, 'triangle', 0.07);
+      bt += d;
+    }
+    _bgmTimeout = setTimeout(() => _scheduleBgm(startAt + dur), (dur - 0.15) * 1000);
+  }
+
+  function startBgm() {
+    if (_bgmRunning || _muted) return;
+    _bgmRunning = true;
+    _scheduleBgm(ctx().currentTime + 0.3);
+  }
+
+  function stopBgm() {
+    _bgmRunning = false;
+    clearTimeout(_bgmTimeout);
+  }
+
+  function toggleMute() {
+    _muted = !_muted;
+    localStorage.setItem('pt-muted', _muted ? '1' : '0');
+    ctx(); // ensure context
+    _master.gain.setTargetAtTime(_muted ? 0 : 0.7, _ctx.currentTime, 0.15);
+    if (_muted) { stopBgm(); }
+    else        { startBgm(); }
+    // sync both mute buttons
+    ['audio-btn','mp-audio-btn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = _muted ? '🔇' : '🔊';
+    });
+    return _muted;
+  }
+
+  function isMuted() { return _muted; }
+
+  // Init mute button states on load
+  document.addEventListener('DOMContentLoaded', () => {
+    ['audio-btn','mp-audio-btn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = _muted ? '🔇' : '🔊';
+    });
+  });
+
+  return { click, modalOpen, modalClose, missionComplete, mailSend, notification,
+           swipe, toggleSound, dragStart, login, error, startBgm, stopBgm, toggleMute, isMuted };
+})();
 </script>
 </body>
 </html>
