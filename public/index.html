@@ -3111,14 +3111,6 @@
     }
     .mp-mission:hover .mp-drag-handle { color:color-mix(in srgb, var(--mp-color) 50%, white); }
     /* check inside mission card */
-    .mp-mission-check {
-      flex-shrink:0; width:18px; height:18px; margin:auto 8px auto 0;
-      border:1.5px solid rgba(255,255,255,.2); border-radius:3px;
-      background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center;
-      color:transparent; font-size:11px; transition:all .15s; padding:0;
-    }
-    .mp-mission-check:hover { border-color:var(--mp-color); color:var(--mp-color); }
-    .mp-mission.mp-done-local .mp-mission-check { background:var(--mp-color); border-color:var(--mp-color); color:#000; }
     .mp-mission.mp-done-local { opacity:.55; }
     .mp-mission.mp-done-local .mp-mission-title { text-decoration:line-through; color:var(--dim); }
 
@@ -6608,7 +6600,7 @@ function mpMissionHtml(t, done, num) {
   const key = 'tk_' + (t.id || Math.random().toString(36).slice(2));
   const tid = t.id || key;
   taskMap[key] = { task: t, color: 'var(--mp-color)' };
-  const localDone = mpChecked[tid] || false;
+  const localDone = mpChecked[tid] || globalChecked[tid] || false;
   const doneClass = (done || localDone) ? (done ? ' done' : ' mp-done-local') : '';
   return `<div class="mp-mission${doneClass}" data-tid="${tid}" data-key="${key}"
     style="animation-delay:${delay}ms" draggable="true"
@@ -6620,8 +6612,6 @@ function mpMissionHtml(t, done, num) {
       <div class="mp-mission-tags">${tags}</div>
     </div>
     ${t.basecamp_url ? `<a class="mp-mission-bc" href="${t.basecamp_url}" target="_blank" onclick="event.stopPropagation()">BC→</a>` : ''}
-    <button class="mp-mission-check" title="Marcar como hecho"
-      onclick="event.stopPropagation();toggleMpCheck('${tid}')">${localDone?'✓':''}</button>
   </div>`;
 }
 
@@ -6709,9 +6699,10 @@ function toggleModalCheck() {
   const nowChecked = !wasChecked;
   globalChecked[_currentModalTid] = nowChecked;
   localStorage.setItem('pt_checked', JSON.stringify(globalChecked));
-  // update cards
+  // update all cards (task-item, dtask-item, mp-mission)
   document.querySelectorAll(`[data-tid="${_currentModalTid}"]`).forEach(card => {
     card.classList.toggle('task-checked', nowChecked);
+    card.classList.toggle('mp-done-local', nowChecked);
   });
   // update modal button
   const btn = document.getElementById('tm-complete-btn');
