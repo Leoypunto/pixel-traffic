@@ -3240,7 +3240,7 @@
 
     /* ── Bottom nav bar (admin/general) ── */
     .mobile-bottom-nav {
-      display: flex !important;
+      display: flex;
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
       background: linear-gradient(180deg, #08051a, #050315);
       border-top: 2px solid var(--blue);
@@ -7311,7 +7311,9 @@ function initMobileNav(mode) {
   document.getElementById('mnav-buzon').style.display   = (mode === 'admin' || mode === 'general') ? '' : 'none';
   document.getElementById('mnav-settings').style.display = (mode === 'admin') ? '' : 'none';
   // Show nav only on mobile (CSS handles display:none on desktop via max-width, but we need to set it visible)
-  nav.style.display = 'flex';
+  // Remove inline style so CSS media query controls visibility.
+  // The nav starts as display:none inline; removing it lets @media(max-width:768px) take over.
+  nav.style.display = '';
 }
 
 function mnavActivate(id) {
