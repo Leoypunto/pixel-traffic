@@ -3394,6 +3394,64 @@
     /* ── Login ── */
     .login-box { padding: 28px 20px !important; max-width: 95vw !important; }
     .login-title { font-size: 16px !important; }
+
+    /* ── Admin: grid de diseñadores ── */
+    .cs-grid-hint { display: none !important; } /* "HOVER = PREVIEW" no aplica en touch */
+    .cs-grid-label { font-size: 5px !important; letter-spacing: 1px !important; }
+
+    /* ── Designer modal (dmodal) — bottom sheet en mobile ── */
+    #designer-modal .dmodal-outer {
+      padding-top: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    #designer-modal .dmodal-avatar {
+      position: relative !important;
+      width: 100% !important;
+      height: 200px !important;
+      right: auto !important; top: auto !important;
+      -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%) !important;
+      mask-image: linear-gradient(to bottom, black 60%, transparent 100%) !important;
+    }
+    #designer-modal .dmodal-head {
+      min-height: 0 !important;
+      flex-direction: column !important;
+      border-radius: 20px 20px 0 0 !important;
+    }
+    #designer-modal .dmodal-hero-content {
+      max-width: 100% !important;
+      padding: 16px 18px 14px !important;
+    }
+    #designer-modal .dmodal-name { font-size: 48px !important; }
+    #designer-modal .dmodal-body { max-height: 45vh !important; }
+
+    /* ── Admin: header con stats — compactar ── */
+    .cs-topbar { padding: 10px 14px !important; gap: 8px !important; flex-wrap: wrap !important; }
+    .cs-credits { display: none !important; }
+
+    /* ── Main content padding ajustado ── */
+    #dashboard-view { padding: 10px 8px !important; }
+
+    /* ── Designer panel: date nav compacta ── */
+    .mp-datebar {
+      flex-direction: row !important; align-items: center !important;
+      padding: 6px 14px !important; gap: 8px !important;
+      justify-content: space-between !important;
+    }
+    .mp-datebar-label { font-size: 11px !important; }
+
+    /* ── Missions wrap: no tapar el sugerencias box ── */
+    .mp-missions-wrap {
+      padding-bottom: calc(140px + env(safe-area-inset-bottom)) !important;
+    }
+
+    /* ── Clients bar: compactar ── */
+    .mp-clients-bar { padding: 8px 14px !important; font-size: 7px !important; }
+    .mp-client-item { gap: 4px !important; }
+
+    /* ── Task cards en admin: no overflow ── */
+    .task-item { overflow: hidden; }
+    .task-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   }
 
   /* ── Extra pequeño (iPhone SE, 375px) ── */
