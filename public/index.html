@@ -4197,7 +4197,6 @@ function applyMode(mode, designer) {
   // Designer mode: mostrar Mi Panel personal (skip dashboard normal)
   if (mode === 'designer' && designer) {
     SFX.login();
-    setTimeout(() => SFX.startBgm(), 900);
     showMyPanel(designer);
     return;
   }
@@ -7101,7 +7100,6 @@ if ('serviceWorker' in navigator) {
 const SFX = (() => {
   let _ctx = null, _master = null;
   let _muted = localStorage.getItem('pt-muted') === '1';
-  let _bgmRunning = false, _bgmTimeout = null;
 
   function ctx() {
     if (!_ctx) {
@@ -7219,64 +7217,10 @@ const SFX = (() => {
     note(175, t+0.26, 0.18, 'sawtooth', 0.20);
   }
 
-  // ── BGM ─────────────────────────────────────────────────────────────────
-  // Upbeat chiptune loop (~4.8s)
-  const _MEL = [
-    // Super Mario Bros-inspired original melody
-    [659,0.10],[0,0.05],[659,0.10],[0,0.10],[659,0.10],[0,0.10],[523,0.10],[659,0.10],
-    [784,0.20],[0,0.20],[392,0.20],[0,0.20],
-    [523,0.20],[0,0.15],[392,0.15],[0,0.10],[330,0.20],[0,0.10],
-    [440,0.12],[494,0.12],[466,0.10],[440,0.12],
-    [392,0.10],[659,0.12],[784,0.12],[880,0.15],
-    [698,0.10],[784,0.10],[0,0.05],[659,0.12],
-    [523,0.10],[587,0.08],[494,0.18],[0,0.10],
-    [523,0.20],[0,0.10],[392,0.15],[0,0.05],[330,0.20],[0,0.20],
-  ];
-  const _BASS = [
-    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[196,0.15],[0,0.10],
-    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[175,0.15],[0,0.10],
-    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[220,0.15],[0,0.10],
-    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[196,0.15],[0,0.10],
-    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[196,0.15],[0,0.10],
-    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[175,0.15],[0,0.10],
-    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[165,0.15],[0,0.10],
-    [131,0.15],[0,0.05],[131,0.08],[0,0.07],[196,0.30],[0,0.10],
-  ];
-
-  function _scheduleBgm(startAt) {
-    if (!_bgmRunning) return;
-    const c = ctx();
-    let mt = startAt, bt = startAt, dur = 0;
-    for (const [f,d] of _MEL) {
-      if (f) note(f, mt, d*0.82, 'square', 0.10);
-      mt += d; dur += d;
-    }
-    for (const [f,d] of _BASS) {
-      if (f) note(f, bt, d*0.70, 'triangle', 0.07);
-      bt += d;
-    }
-    _bgmTimeout = setTimeout(() => _scheduleBgm(startAt + dur), (dur - 0.15) * 1000);
-  }
-
-  function startBgm() {
-    if (_bgmRunning || _muted) return;
-    _bgmRunning = true;
-    _scheduleBgm(ctx().currentTime + 0.3);
-  }
-
-  function stopBgm() {
-    _bgmRunning = false;
-    clearTimeout(_bgmTimeout);
-  }
-
   function toggleMute() {
     _muted = !_muted;
     localStorage.setItem('pt-muted', _muted ? '1' : '0');
-    ctx(); // ensure context
-    _master.gain.setTargetAtTime(_muted ? 0 : 0.7, _ctx.currentTime, 0.15);
-    if (_muted) { stopBgm(); }
-    else        { startBgm(); }
-    // sync both mute buttons
+    if (_master) _master.gain.setTargetAtTime(_muted ? 0 : 0.7, ctx().currentTime, 0.15);
     ['audio-btn','mp-audio-btn'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = _muted ? '🔇' : '🔊';
@@ -7295,7 +7239,7 @@ const SFX = (() => {
   });
 
   return { click, modalOpen, modalClose, missionComplete, mailSend, notification,
-           swipe, toggleSound, dragStart, login, error, startBgm, stopBgm, toggleMute, isMuted };
+           swipe, toggleSound, dragStart, login, error, toggleMute, isMuted };
 })();
 </script>
 </body>
