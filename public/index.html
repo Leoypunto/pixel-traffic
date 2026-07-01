@@ -1854,7 +1854,7 @@
 
     /* ─── MODAL OVERLAY ───────────────────────────────────────────── */
     .modal-overlay {
-      display:none; position:fixed; inset:0; z-index:100;
+      display:none; position:fixed; inset:0; z-index:500;
       background:rgba(0,0,0,.82);
       align-items:center; justify-content:center;
       padding:20px;
@@ -3216,6 +3216,190 @@
     body.day-theme .comment-text { color:var(--text); }
     body.day-theme .comment-date { color:var(--dim); }
     body.day-theme #buzon-view .buzon-sub { color:var(--dim); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     MOBILE — max-width: 768px
+  ═══════════════════════════════════════════════════════════════════ */
+  @media (max-width: 768px) {
+
+    /* ── Global touch targets ── */
+    button, a { min-height: 40px; }
+
+    /* ── Header admin/general ── */
+    header {
+      height: 48px; padding: 0 12px; gap: 6px;
+      position: sticky; top: 0;
+    }
+    .logo { font-size: 7px; }
+    /* Ocultar elementos secundarios del header en mobile */
+    .fd-date-nav, .fd-sort, .h-sep,
+    .sync-status, .h-stat-kpi { display: none !important; }
+    .h-nav { display: none !important; }  /* se reemplaza con bottom nav */
+    .pixel-btn { font-size: 6px; padding: 5px 8px; }
+    .theme-btn, #audio-btn { width: 36px; height: 36px; font-size: 13px; }
+
+    /* ── Bottom nav bar (admin/general) ── */
+    .mobile-bottom-nav {
+      display: flex !important;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+      background: linear-gradient(180deg, #08051a, #050315);
+      border-top: 2px solid var(--blue);
+      box-shadow: 0 -4px 20px rgba(0,229,255,.15);
+      height: 56px;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .mobile-nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 3px;
+      font-family: 'Press Start 2P', monospace; font-size: 4.5px;
+      color: var(--dim); background: none; border: none; cursor: pointer;
+      transition: color .15s; padding: 0; letter-spacing: .5px;
+      border-top: 2px solid transparent;
+    }
+    .mobile-nav-btn .mnav-icon { font-size: 16px; line-height: 1; }
+    .mobile-nav-btn.active { color: var(--gold); border-top-color: var(--gold); }
+    .mobile-nav-btn .notif-dot {
+      position: absolute; top: 6px; right: calc(50% - 14px);
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--red); box-shadow: 0 0 6px var(--red);
+    }
+
+    /* Padding para que el contenido no quede bajo el bottom nav */
+    body:not(.mp-active-body) main,
+    body:not(.mp-active-body) #buzon-view,
+    body:not(.mp-active-body) #metrics-view,
+    body:not(.mp-active-body) #settings-view { padding-bottom: 70px; }
+
+    /* ── Grid de diseñadores ── */
+    .grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    .cs-card { padding: 10px !important; }
+
+    /* ── Task cards ── */
+    .task-item { padding: 9px 4px; gap: 4px; }
+    .task-title { font-size: 8px !important; }
+    .task-link { display: none; } /* BC link se ve en el modal */
+
+    /* ── Task modal ── */
+    .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
+    .modal-box {
+      max-width: 100% !important; width: 100% !important;
+      max-height: 92vh !important; border-radius: 20px 20px 0 0 !important;
+      animation: tmModalMobileEnter .28s cubic-bezier(.22,.68,0,1.1) both !important;
+    }
+    @keyframes tmModalMobileEnter {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .modal-head { padding: 16px 18px 14px; }
+    .modal-body { padding: 14px 18px 20px; gap: 14px; }
+    .modal-fields { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+    .modal-field { padding: 8px 10px !important; }
+    .modal-complete-btn { font-size: 6px !important; padding: 10px 10px !important; }
+
+    /* Designer modal ── */
+    #designer-modal { padding: 0 !important; align-items: flex-end !important; }
+    .dmodal-box {
+      max-width: 100% !important; width: 100% !important;
+      max-height: 90vh !important; border-radius: 20px 20px 0 0 !important;
+    }
+
+    /* ── DESIGNER PANEL — layout mobile ── */
+    #my-panel { flex-direction: column !important; }
+    .mp-main { flex-direction: column !important; overflow: visible !important; }
+
+    /* Char: banner compacto horizontal en top */
+    .mp-char {
+      width: 100% !important; min-height: 0 !important;
+      flex-direction: row !important; align-items: center !important;
+      padding: 10px 14px !important;
+      border-right: none !important;
+      border-bottom: 1px solid color-mix(in srgb, var(--mp-color) 20%, transparent) !important;
+      gap: 14px; flex-shrink: 0 !important;
+    }
+    .mp-char::after { display: none; } /* quitar border anim en mobile */
+    .mp-avatar-wrap {
+      width: 64px !important; height: 64px !important; flex-shrink: 0 !important;
+      border-radius: 50% !important; overflow: hidden !important;
+      flex: none !important; min-height: 0 !important;
+      border: 2px solid color-mix(in srgb, var(--mp-color) 50%, transparent);
+    }
+    .mp-avatar-img { object-position: top center !important; }
+    .mp-avatar-gradient,
+    .mp-avatar-ring,
+    .mp-avatar-bg { display: none !important; }
+    .mp-char-info {
+      flex: 1; padding: 0 !important; min-width: 0;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .mp-char-name {
+      font-size: clamp(28px, 8vw, 44px) !important;
+      line-height: 1 !important; margin-bottom: 0 !important;
+    }
+    .mp-brands { font-size: 7px !important; }
+    .mp-title-tag { font-size: 5px !important; padding: 2px 6px !important; }
+
+    /* Botones flotantes: fila horizontal debajo del nombre */
+    .mp-char-actions {
+      position: static !important; flex-direction: row !important;
+      gap: 6px !important; flex-shrink: 0; align-self: flex-start;
+    }
+    .mp-action-btn {
+      width: 36px !important; height: 36px !important;
+      animation: none !important;
+    }
+
+    /* Skills/stats bar — ocultar en mobile para dar espacio */
+    .mp-skills-bar, .mp-stats-row { display: none !important; }
+
+    /* Missions: full width, scrollable */
+    .mp-missions-wrap {
+      flex: 1; overflow-y: auto !important; -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(180px + env(safe-area-inset-bottom)) !important;
+    }
+    .mp-missions { padding: 12px 14px !important; }
+
+    /* Mission cards más altas para touch */
+    .mp-mission { min-height: 52px !important; }
+    .mp-mission-title { font-size: 8.5px !important; }
+    .mp-drag-handle { padding: 0 10px !important; font-size: 16px !important; }
+
+    /* Suggestion box: bottom bar fija */
+    .mp-sugerencias-wrap {
+      position: fixed !important; bottom: 0 !important; left: 0 !important;
+      right: 0 !important; z-index: 30 !important;
+      padding-bottom: env(safe-area-inset-bottom) !important;
+    }
+    .mp-sugerencias {
+      flex-direction: column !important; gap: 0 !important;
+      margin: 0 !important; border-top: 2px solid color-mix(in srgb, var(--mp-color) 30%, transparent);
+      background: var(--bg); padding: 8px 12px 8px !important;
+    }
+    .mp-mailbox-scene { display: none !important; } /* mailbox oculto en mobile */
+    .mp-sug-input { border-radius: 8px !important; }
+    #mp-sug-textarea { min-height: 40px !important; font-size: 12px !important; padding: 8px 10px !important; }
+    .mp-sug-footer { margin-top: 6px !important; gap: 8px !important; }
+    .mp-sug-send { padding: 10px 16px !important; font-size: 6px !important; }
+    .mp-anon-toggle { font-size: 5px !important; }
+
+    /* Misiones day-theme */
+    body.day-theme .mp-sugerencias { background: var(--bg); }
+
+    /* ── Buzon view ── */
+    .buzon-header { font-size: 8px !important; padding: 12px 16px !important; }
+    .comment-card { padding: 10px 14px !important; }
+
+    /* ── Login ── */
+    .login-box { padding: 28px 20px !important; max-width: 95vw !important; }
+    .login-title { font-size: 16px !important; }
+  }
+
+  /* ── Extra pequeño (iPhone SE, 375px) ── */
+  @media (max-width: 400px) {
+    .grid { grid-template-columns: 1fr !important; }
+    .mp-char-name { font-size: 26px !important; }
+    .mp-avatar-wrap { width: 52px !important; height: 52px !important; }
+    .modal-fields { grid-template-columns: 1fr !important; }
+  }
   </style>
 </head>
 <body>
@@ -3260,14 +3444,17 @@
       </div>
 
       <!-- Missions list -->
-      <div class="mp-missions" id="mp-missions">
-        <div class="mp-loading">CARGANDO MISIONES...</div>
+      <div class="mp-missions-wrap">
+        <div class="mp-missions" id="mp-missions">
+          <div class="mp-loading">CARGANDO MISIONES...</div>
+        </div>
+
+        <!-- Clients bar -->
+        <div class="mp-clients-bar" id="mp-clients-bar"></div>
       </div>
 
-      <!-- Clients bar -->
-      <div class="mp-clients-bar" id="mp-clients-bar"></div>
-
       <!-- Caja de Sugerencias -->
+      <div class="mp-sugerencias-wrap">
       <div class="mp-sugerencias">
         <!-- 3D Mailbox -->
         <div class="mp-mailbox-scene">
@@ -3315,6 +3502,7 @@
           <div class="mp-sug-ok" id="mp-sug-ok" style="display:none"></div>
         </div>
       </div>
+      </div><!-- /mp-sugerencias-wrap -->
     </div>
 
   </div>
@@ -3590,6 +3778,22 @@
   <div class="sync-status"><div class="dot" id="sync-dot"></div><span id="sync-text">—</span></div>
   <button class="pixel-btn" onclick="refresh()">⟳ SYNC</button>
 </header>
+
+<!-- Mobile bottom nav (visible solo en mobile vía CSS) -->
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none">
+  <button class="mobile-nav-btn active" id="mnav-dashboard" onclick="switchView('dashboard',null);mnavActivate('mnav-dashboard')">
+    <span class="mnav-icon">📊</span>TABLERO
+  </button>
+  <button class="mobile-nav-btn" id="mnav-metrics" onclick="switchView('metrics',null);mnavActivate('mnav-metrics')" style="display:none">
+    <span class="mnav-icon">📈</span>MÉTRICAS
+  </button>
+  <button class="mobile-nav-btn" id="mnav-buzon" onclick="switchView('buzon',null);mnavActivate('mnav-buzon')" style="display:none">
+    <span class="mnav-icon" style="position:relative">📬<span class="notif-dot" id="mnav-buzon-dot" style="display:none"></span></span>BUZÓN
+  </button>
+  <button class="mobile-nav-btn" id="mnav-settings" onclick="switchView('settings',null);mnavActivate('mnav-settings')" style="display:none">
+    <span class="mnav-icon">⚙️</span>CONFIG
+  </button>
+</nav>
 
 <div id="buzon-view">
   <div class="buzon-header">📬 BUZÓN DE SUGERENCIAS</div>
@@ -4202,12 +4406,13 @@ function applyMode(mode, designer) {
   }
 
   SFX.login();
-  setTimeout(() => SFX.startBgm(), 900);
   // Show BUZÓN tab for admin and general; start SSE
   const buzonTab = document.getElementById('nav-tab-buzon');
   if (buzonTab) buzonTab.style.display = (mode === 'admin' || mode === 'general') ? '' : 'none';
   if (mode === 'admin' || mode === 'general') {
     startCommentStream();
+    // Mobile bottom nav
+    initMobileNav(mode);
   }
 
   // General mode: enforce dashboard-only view
@@ -6588,6 +6793,7 @@ function renderMpMissions(tasks) {
   el.innerHTML = html;
   applyMpOrder();
   initMpDrag();
+  initMpTouchDrag();
 }
 
 function mpMissionHtml(t, done, num) {
@@ -7094,6 +7300,123 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
+}
+
+// ─── MOBILE NAV ──────────────────────────────────────────────────────────────
+function initMobileNav(mode) {
+  const nav = document.getElementById('mobile-bottom-nav');
+  if (!nav) return;
+  // Show/hide tabs per mode
+  document.getElementById('mnav-metrics').style.display = (mode === 'admin') ? '' : 'none';
+  document.getElementById('mnav-buzon').style.display   = (mode === 'admin' || mode === 'general') ? '' : 'none';
+  document.getElementById('mnav-settings').style.display = (mode === 'admin') ? '' : 'none';
+  // Show nav only on mobile (CSS handles display:none on desktop via max-width, but we need to set it visible)
+  nav.style.display = 'flex';
+}
+
+function mnavActivate(id) {
+  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(id);
+  if (btn) btn.classList.add('active');
+  // Clear buzon badge dot when opening buzon
+  if (id === 'mnav-buzon') {
+    const dot = document.getElementById('mnav-buzon-dot');
+    if (dot) dot.style.display = 'none';
+  }
+}
+
+// Sync buzon badge to mobile nav dot
+const _origShowBuzonNotif = window.showBuzonNotif;
+document.addEventListener('DOMContentLoaded', () => {
+  // Patch showBuzonNotif to also update mobile dot
+  const orig = window.showBuzonNotif;
+  if (orig) {
+    window.showBuzonNotif = function(comment) {
+      orig(comment);
+      const dot = document.getElementById('mnav-buzon-dot');
+      if (dot) dot.style.display = '';
+    };
+  }
+});
+
+// ─── TOUCH DRAG (pointer events) for mp-missions ─────────────────────────────
+function initMpTouchDrag() {
+  const container = document.getElementById('mp-missions');
+  if (!container) return;
+  let dragging = null, startY = 0, origIdx = 0;
+  let placeholder = null;
+
+  function getItems() { return [...container.querySelectorAll('.mp-mission')]; }
+
+  function onPointerDown(e) {
+    const handle = e.target.closest('.mp-drag-handle');
+    if (!handle) return;
+    const item = handle.closest('.mp-mission');
+    if (!item) return;
+    e.preventDefault();
+
+    dragging = item;
+    startY = e.clientY;
+    origIdx = getItems().indexOf(item);
+
+    // Clone as placeholder
+    placeholder = document.createElement('div');
+    placeholder.style.cssText = `height:${item.offsetHeight}px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.15);border-radius:10px;margin-bottom:7px;`;
+    item.parentNode.insertBefore(placeholder, item.nextSibling);
+
+    item.style.cssText += 'position:fixed;z-index:999;width:' + item.offsetWidth + 'px;opacity:.85;pointer-events:none;left:' + item.getBoundingClientRect().left + 'px;top:' + item.getBoundingClientRect().top + 'px;';
+    item.classList.add('dragging');
+    SFX.dragStart();
+
+    document.addEventListener('pointermove', onPointerMove, {passive:false});
+    document.addEventListener('pointerup', onPointerUp);
+  }
+
+  function onPointerMove(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    const dy = e.clientY - startY;
+    dragging.style.top = (parseFloat(dragging.style.top) + dy) + 'px';
+    startY = e.clientY;
+
+    // Find insertion point
+    const items = getItems().filter(i => i !== dragging);
+    const cy = e.clientY;
+    let target = null, before = true;
+    for (const it of items) {
+      const r = it.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      if (cy < mid) { target = it; before = true; break; }
+      target = it; before = false;
+    }
+    if (target) {
+      container.insertBefore(placeholder, before ? target : target.nextSibling);
+    }
+  }
+
+  function onPointerUp() {
+    if (!dragging) return;
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+
+    // Drop into placeholder position
+    dragging.style.cssText = dragging.style.cssText
+      .replace(/position:[^;]+;/g,'')
+      .replace(/z-index:[^;]+;/g,'')
+      .replace(/width:[^;]+;/g,'')
+      .replace(/opacity:[^;]+;/g,'')
+      .replace(/pointer-events:[^;]+;/g,'')
+      .replace(/left:[^;]+;/g,'')
+      .replace(/top:[^;]+;/g,'');
+    dragging.classList.remove('dragging');
+    container.insertBefore(dragging, placeholder);
+    placeholder.remove();
+    placeholder = null;
+    dragging = null;
+    saveMpOrder();
+  }
+
+  container.addEventListener('pointerdown', onPointerDown);
 }
 
 // ─── 8-BIT AUDIO ENGINE ──────────────────────────────────────────────────────
