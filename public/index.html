@@ -491,6 +491,44 @@
     }
     .cs-hero-press.ready { color:var(--green); animation: csReadyBlink .6s ease-in-out infinite; }
 
+    /* ─── Hero: rol + stats + botón (personajes-view) ─── */
+    .cs-hero-role { font-size:7px; color:var(--gold); letter-spacing:1px; margin-top:6px; text-shadow:1px 1px 0 #000; }
+    .pv-hero-stats { margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+    .pv-stat { display:flex; align-items:center; gap:6px; }
+    .pv-stat-ab { font-size:7px; color:var(--dim); width:16px; }
+    .pv-stat-nm { font-size:7px; color:var(--text); width:64px; letter-spacing:1px; }
+    .pv-stat-track { flex:1; height:8px; background:#0a0a1a; border:2px solid var(--border); border-radius:3px; overflow:hidden; }
+    .pv-stat-fill { height:100%; }
+    .pv-hero-btn {
+      font-family:'Press Start 2P',monospace; font-size:10px; width:100%; margin-top:14px; padding:13px;
+      background:var(--cs-cc,var(--gold)); color:#000; border:2px solid #000; border-radius:6px; cursor:pointer;
+      letter-spacing:1px; box-shadow:3px 3px 0 rgba(0,0,0,.6); transition:transform .08s;
+    }
+    .pv-hero-btn:active { transform:translate(2px,2px); box-shadow:1px 1px 0 rgba(0,0,0,.6); }
+    #pv-grid .cs-portrait.pv-selected { outline:3px solid var(--portrait-color); outline-offset:1px; }
+
+    /* ─── Personajes-view MÓVIL: layout apilado tipo arcade ─── */
+    @media (max-width:768px) {
+      #personajes-view { height:auto !important; }
+      #personajes-view .cs-inner { height:auto; }
+      #personajes-view .cs-main { flex-direction:column; min-height:0; }
+      #personajes-view .cs-hero-panel {
+        width:100% !important; flex-shrink:0; border-right:none;
+        border-bottom:3px solid var(--cs-cc,rgba(255,204,0,.3)); border-radius:0 0 16px 16px; overflow:hidden;
+      }
+      #personajes-view .cs-hero-img-wrap { height:300px; flex:none; }
+      #personajes-view .cs-hero-name { font-size:30px !important; }
+      #personajes-view .cs-hero-info { padding:14px 16px 18px; }
+      #personajes-view .cs-grid-panel { padding:14px 12px 24px; }
+      #personajes-view .cs-grid {
+        grid-template-columns:repeat(4,1fr) !important; grid-template-rows:none !important;
+        gap:8px; overflow:visible; flex:none;
+      }
+      #personajes-view .cs-grid .cs-portrait { aspect-ratio:3/4; height:auto; }
+      #personajes-view .cs-grid-hint { display:none; }
+      #personajes-view .cs-grid-label { font-size:7px; letter-spacing:1px; }
+    }
+
     /* ─── CENTER: grid ─── */
     .cs-grid-panel {
       flex:1; display:flex; flex-direction:column; padding:16px 20px 12px;
@@ -4568,8 +4606,11 @@ function showPersonajesView() {
           </div>
           <div class="cs-hero-info">
             <div class="cs-hero-name" id="pv-hero-name" style="font-size:28px">PIXEL TRAFFIC</div>
+            <div class="cs-hero-role" id="pv-hero-role" style="display:none"></div>
             <div class="cs-hero-level" id="pv-hero-level">TOCA UN PERSONAJE</div>
             <div class="cs-hero-stars" id="pv-hero-stars"></div>
+            <div class="pv-hero-stats" id="pv-hero-stats" style="display:none"></div>
+            <button class="pv-hero-btn" id="pv-hero-btn" style="display:none" onclick="pvConfirm()">▶ VER TAREAS</button>
             <div class="cs-hero-press" id="pv-hero-press" style="display:none"></div>
           </div>
         </div>
@@ -4607,7 +4648,7 @@ function showPersonajesView() {
       <div class="cs-portrait pv-portrait"
         style="--portrait-color:${color};--entry-delay:${delay}ms;--pulse-delay:${pulseDelay}s;animation-delay:${delay}ms"
         onmouseenter="pvHover('${name.replace(/'/g,"\\'")}','${color}')"
-        onclick="pvClick(${realIdx >= 0 ? realIdx : i})">
+        onclick="pvSelect(${realIdx >= 0 ? realIdx : i},'${name.replace(/'/g,"\\'")}','${color}')">
         ${activeCount !== null ? `<div class="cs-task-badge${activeCount === 0 ? ' zero' : ''}">${activeCount}</div>` : ''}
         <img src="${csAvatarPath(nick)}" alt="${nick}"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
@@ -4650,9 +4691,51 @@ function pvHover(name, color) {
   const isAdmin = document.body.classList.contains('mode-admin');
   if (lvlEl) lvlEl.textContent = (isAdmin && r.level ? r.level + ' · ' : '') + (d.active_count != null ? `${d.active_count} ACTIVAS` : '');
   const starsEl = document.getElementById('pv-hero-stars');
-  if (starsEl && _authMode === 'admin') {
-    starsEl.textContent = r.stars ? '★'.repeat(r.stars) + (r.half?'½':'') : '';
+  const roleEl  = document.getElementById('pv-hero-role');
+  const statsEl = document.getElementById('pv-hero-stats');
+  if (_authMode === 'admin') {
+    if (starsEl) starsEl.textContent = r.stars ? '★'.repeat(r.stars) + (r.half?'½':'') : '';
+    if (roleEl)  { roleEl.style.display = ''; roleEl.textContent = (d.title || r.level || 'DISEÑADOR').toUpperCase(); }
+    if (statsEl) { statsEl.style.display = ''; statsEl.innerHTML = pvStatBars(d); }
+  } else {
+    if (starsEl) starsEl.textContent = '';
+    if (roleEl)  roleEl.style.display = 'none';
+    if (statsEl) statsEl.style.display = 'none';
   }
+}
+
+// Construye las 4 barras de skills desde los datos del diseñador (solo admin)
+function pvStatBars(d) {
+  const s = d && d.skills ? (typeof d.skills === 'string' ? JSON.parse(d.skills) : d.skills) : {};
+  const defs = [['DA','DIR.ARTE','arte','#dd00ff'],['EJ','EJECUCION','ejecucion','#00aaff'],
+                ['AN','ANIMACION','animacion','#ff6600'],['VE','VELOCIDAD','velocidad','#00ff55']];
+  return defs.map(([ab,nm,k,c]) => {
+    const v = Math.max(1, Math.min(5, s[k] || 3));
+    return `<div class="pv-stat"><span class="pv-stat-ab">${ab}</span><span class="pv-stat-nm">${nm}</span>`
+      + `<div class="pv-stat-track"><div class="pv-stat-fill" style="width:${v/5*100}%;background:${c}"></div></div></div>`;
+  }).join('');
+}
+
+let pvCurrentIdx = -1;
+// Tap en una carta: en móvil previsualiza el destacado y sube; en desktop navega directo
+function pvSelect(idx, name, color) {
+  pvCurrentIdx = idx;
+  pvHover(name, color);
+  const mobile = window.innerWidth <= 768;
+  if (mobile) {
+    document.querySelectorAll('#pv-grid .cs-portrait.pv-selected').forEach(e => e.classList.remove('pv-selected'));
+    if (event && event.currentTarget) event.currentTarget.classList.add('pv-selected');
+    const btn = document.getElementById('pv-hero-btn');
+    if (btn) { btn.style.display = 'block'; btn.textContent = '▶ VER TAREAS DE ' + name.split(' ')[0].toUpperCase(); }
+    const hero = document.getElementById('pv-hero-panel');
+    if (hero) hero.scrollIntoView({ behavior:'smooth', block:'start' });
+  } else {
+    pvClick(idx);
+  }
+}
+
+function pvConfirm() {
+  if (pvCurrentIdx >= 0) pvClick(pvCurrentIdx);
 }
 
 function pvClick(idx) {
