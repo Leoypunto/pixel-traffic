@@ -477,14 +477,13 @@ app.post('/api/import', express.json({ limit: '10mb' }), (req, res) => {
     return res.status(400).json({ error: 'No tasks provided' });
   }
   const now = new Date().toISOString();
-  let saved = 0;
+  let saved = 0, deduped = 0;
   for (const task of tasks) {
-    try { queries.insertTask.run({ ...task, scraped_at: now }); saved++; } catch {}
+    try { queries.upsertTask.run({ ...task, scraped_at: now }); saved++; } catch {}
   }
-  const dedup = queries.deduplicateTasks.run();
   queries.logSync.run({ synced_at: now, status: 'ok', tasks_found: tasks.length, error: null });
-  console.log(`[Import] ${saved} tareas importadas, ${dedup.changes} duplicados eliminados`);
-  res.json({ ok: true, saved, deduped: dedup.changes });
+  console.log(`[Import] ${saved} tareas importadas`);
+  res.json({ ok: true, saved, deduped });
 });
 
 // ─── API: Manual refresh ─────────────────────────────────────────────────────
