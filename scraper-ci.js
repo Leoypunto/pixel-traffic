@@ -11,7 +11,7 @@ const SECRET       = process.env.IMPORT_SECRET || 'import2026';
 // Solo estos son diseñadores — filtramos cualquier otro nombre extraído
 const DESIGNERS = new Set([
   'Leo Castro','Jonathan Fajardo','Yamileth Batista','Ramiro González',
-  'Cristian Delgado','Marcela Sánchez','Miguel Díaz','Luis Wong',
+  'Kenny Matos','Gianfranco DeBlasi','Miguel Díaz','Luis Wong',
   'Jonathan Barrelier','Ana Turner','Paula Lobo','Eduardo Rolla',
   'Julio Mejía','Arturo Atencio','Jesús Ortega','Aris Alain',
   'Mariel Marengo','Alexander Caballero','Robin De León',
