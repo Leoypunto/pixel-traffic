@@ -33,7 +33,7 @@ function verifyToken(raw) {
 // Lista de diseñadores para auth de modo designer
 const DESIGNERS = [
   'Leo Castro','Jonathan Fajardo','Yamileth Batista','Ramiro González',
-  'Cristian Delgado','Marcela Sánchez','Miguel Díaz','Luis Wong',
+  'Kenny Matos','Gianfranco DeBlasi','Miguel Díaz','Luis Wong',
   'Jonathan Barrelier','Ana Turner','Paula Lobo','Eduardo Rolla',
   'Julio Mejía','Arturo Atencio','Jesús Ortega','Aris Alain',
   'Mariel Marengo','Alexander Caballero','Robin De León',
